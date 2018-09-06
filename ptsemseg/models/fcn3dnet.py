@@ -5,30 +5,60 @@ from ptsemseg.models.utils import *
 
 class stem(nn.Module):
     def __init__(self):
-        self.layer1 = nn.Conv3d(in_channels=1, out_channels=32, kernel_size=(3,3,1), stride=2, padding=0, bias=False)
-        self.layer2 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(3,3,4), stride=1, padding=0, bias=False)
+        self.layer1 = nn.Conv3d(in_channels=1, out_channels=32, kernel_size=(3,3,1), stride=2)
+        self.layer2 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(3,3,4))
 
         self.path1 = nn.Sequential(nn.Conv3d(in_channels=64, out_channels=64, kernel_size=1, stride=1, padding=0, bias=False),
-                                   nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1), stride=1, padding=0, bias=False))
+                                   nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1)))
 
-        self.path2 = nn.Sequential(nn.Conv3d(in_channels=64, out_channels=64, kernel_size=1, stride=1, padding=0, bias=False),
-                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(1,7,1), stride=1, padding=0, bias=False),
-                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(1,7,1), stride=1, padding=0, bias=False),
-                                   nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1), stride=1, padding=0, bias=False))
+        self.path2 = nn.Sequential(nn.Conv3d(in_channels=64, out_channels=64, kernel_size=1),
+                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(1,7,1)),
+                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(1,7,1)),
+                                   nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1)))
 
     def forward(self, x):
         conv1 = self.layer1(x)
         conv2 = self.layer2(conv1)
         conv3_1 = self.path1(conv2)
         conv3_2 = self.path2(conv2)
-        return torch.cat((conv3_1, conv3_2), dim=1) #not sure
+        out = torch.cat((conv3_1, conv3_2), dim=1) #not sure
+        return out
+
 
 class inceptionA(nn.Module):
     def __init__(self):
         self.layer1 = nn.ReLU(inplace=False)
-        self.layer2_1 = nn.Conv3d(in_channels=96, out_channels=192, kernel_size=(3,3,1), stride=2, padding=0, bias=False)
+        self.layer2_1 = nn.Conv3d(in_channels=192, out_channels=192, kernel_size=(3,3,1), stride=2)
         self.layer2_2 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
-        self.layer3_1 = nn.Conv3d(in_channels=192, out_channels=32, kernel_size=1, stride=1, padding=0, bias=False)
+        self.layer3_1 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
+                                      nn.Conv3d(in_channels=32, out_channels=384, kernel_size=1))
+        self.layer3_2 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
+                                      nn.Conv3d(in_channels=32, out_channels=32, kernel_size=(3,3,1)),
+                                      nn.Conv3d(in_channels=32, out_channels=384, kernel_size=1))
+        self.layer3_3 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
+                                      nn.Conv3d(in_channels=32, out_channels=48, kernel_size=(3,3,1)),
+                                      nn.Conv3d(in_channels=48, out_channels=64, kernel_size=(3,3,1)),
+                                      nn.Conv3d(in_channels=64, out_channels=384, kernel_size=1))
+    def forward(self, x):
+        relu = self.layer1(x)
+        conv1 = self.layer2_1(relu)
+        conv2 = self.layer2_2(relu)
+        concat = torch.cat((conv1, conv2), dim=1)
+        path3_1 = self.layer3_1(concat)
+        path3_2 = self.layer3_2(concat)
+        path3_3 = self.layer3_3(concat)
+        out = torch.add(path3_1, path3_2)
+        out = torch.add(out, path3_3)
+        out = torch.add(out, concat)
+
+        return out
+
+class reductionA(nn.Module):
+    def __init__(self):
+        self.layer1 = nn.ReLU(inplace=False)
+        self.layer2_1 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
+        # self.layer2_2 = nn.Conv3d(in_channels=, out_channels=, kernel_size=)
+
         
 
 
