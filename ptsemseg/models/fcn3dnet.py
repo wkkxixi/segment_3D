@@ -1,11 +1,11 @@
 import torch.nn as nn
-
 from ptsemseg.models.utils import *
 
-
 class stem(nn.Module):
-    def __init__(self):
-        self.layer1 = nn.Conv3d(in_channels=1, out_channels=32, kernel_size=(3,3,1), stride=2)
+    def __init__(self, conv_in_channels):
+        super(stem, self).__init__()
+
+        self.layer1 = nn.Conv3d(in_channels=conv_in_channels, out_channels=32, kernel_size=(3,3,1), stride=2)
         self.layer2 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(3,3,4))
 
         self.path1 = nn.Sequential(nn.Conv3d(in_channels=64, out_channels=64, kernel_size=1, stride=1, padding=0, bias=False),
@@ -26,9 +26,11 @@ class stem(nn.Module):
 
 
 class inceptionA(nn.Module):
-    def __init__(self):
+    def __init__(self, conv_in_channels):
+        super(inceptionA, self).__init__()
+
         self.layer1 = nn.ReLU(inplace=False)
-        self.layer2_1 = nn.Conv3d(in_channels=192, out_channels=192, kernel_size=(3,3,1), stride=2)
+        self.layer2_1 = nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=(3,3,1), stride=2)
         self.layer2_2 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
         self.layer3_1 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
                                       nn.Conv3d(in_channels=32, out_channels=384, kernel_size=1))
@@ -54,72 +56,50 @@ class inceptionA(nn.Module):
         return out
 
 class reductionA(nn.Module):
-    def __init__(self):
+    def __init__(self, conv_in_channels):
+        super(reductionA, self).__init__()
+
         self.layer1 = nn.ReLU(inplace=False)
         self.layer2_1 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
-        # self.layer2_2 = nn.Conv3d(in_channels=, out_channels=, kernel_size=)
+        self.layer2_2 = nn.Conv3d(in_channels=conv_in_channels, out_channels=32, kernel_size=(3,3,1), stride=2)
+        self.layer2_3 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=256, kernel_size=1, stride=1),
+                                      nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(3,3,1), stride=1),
+                                      nn.Conv3d(in_channels=256, out_channels=384, kernel_size=(3,3,1), stride=1))
 
-        
 
+
+    def forward(self, x):
+        out = self.layer1(x)
+        out1 = self.layer2_1(out)
+        out2 = self.layer2_2(out)
+        out3 = self.layer2_3(out)
+        out = torch.cat((out1, out2), dim=1)
+        out = torch.cat((out, out3), dim=1)
+        return x
 
 class fcn3dnet(nn.Module):
-    def __init__(
-            self,
-            n_classes=2,
-            is_deconv=True,
-            in_channels=1,
-            is_batchnorm=True,
-    ):
+    def __init__(self, num_classes=2):
         super(fcn3dnet, self).__init__()
-        self.is_deconv = is_deconv
-        self.in_channels = in_channels
-        self.is_batchnorm = is_batchnorm
 
-        filters = [64, 128, 256, 512, 1024]
+        # stem
+        self.block1 = stem(conv_in_channels=1)
 
-        # downsampling
-        self.conv1 = unetConv2(self.in_channels, filters[0], self.is_batchnorm)
-        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
+        # inceptionA
+        self.block2 = inceptionA(conv_in_channels=192)
 
-        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm)
-        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+        # reductionA
+        self.block3 = reductionA(conv_in_channels=384)
 
-        self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm)
-        self.maxpool3 = nn.MaxPool2d(kernel_size=2)
+        #todo
 
-        self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm)
-        self.maxpool4 = nn.MaxPool2d(kernel_size=2)
+    def forward(self,x):
+        print('The input size is: ' + str(x.size()))
+        out = self.block1(x)
+        print('The size after stem: ' + str(out.size))
+        # out = self.block2(out)
+        # print('The size after inceptionA: ' + str(out.size))
+        # out = self.block3(out)
+        # print('The size after reductionA: ' + str(out.size))
 
-        self.center = unetConv2(filters[3], filters[4], self.is_batchnorm)
+        return out
 
-        # upsampling
-        self.up_concat4 = unetUp(filters[4], filters[3], self.is_deconv)
-        self.up_concat3 = unetUp(filters[3], filters[2], self.is_deconv)
-        self.up_concat2 = unetUp(filters[2], filters[1], self.is_deconv)
-        self.up_concat1 = unetUp(filters[1], filters[0], self.is_deconv)
-
-        # final conv (without any concat)
-        self.final = nn.Conv2d(filters[0], n_classes, 1)
-
-    def forward(self, inputs):
-        conv1 = self.conv1(inputs)
-        maxpool1 = self.maxpool1(conv1)
-
-        conv2 = self.conv2(maxpool1)
-        maxpool2 = self.maxpool2(conv2)
-
-        conv3 = self.conv3(maxpool2)
-        maxpool3 = self.maxpool3(conv3)
-
-        conv4 = self.conv4(maxpool3)
-        maxpool4 = self.maxpool4(conv4)
-
-        center = self.center(maxpool4)
-        up4 = self.up_concat4(conv4, center)
-        up3 = self.up_concat3(conv3, up4)
-        up2 = self.up_concat2(conv2, up3)
-        up1 = self.up_concat1(conv1, up2)
-
-        final = self.final(up1)
-
-        return final
