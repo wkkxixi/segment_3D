@@ -12,16 +12,22 @@ class stem(nn.Module):
                                    nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1)))
 
         self.path2 = nn.Sequential(nn.Conv3d(in_channels=64, out_channels=64, kernel_size=1),
-                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(1,7,1)),
-                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(1,7,1)),
+                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(1,7,1), padding=2),
+                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(7,1,7), padding=1),
                                    nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1)))
 
     def forward(self, x):
+        print('stem - input: ' + str(x.size()))
         conv1 = self.layer1(x)
+        print('stem - after layer1: ' + str(conv1.size()))
         conv2 = self.layer2(conv1)
+        print('stem - after layer2: ' + str(conv2.size()))
         conv3_1 = self.path1(conv2)
+        print('stem - after layer2 path1: ' + str(conv3_1.size()))
         conv3_2 = self.path2(conv2)
+        print('stem - after layer2 path2: ' + str(conv3_2.size()))
         out = torch.cat((conv3_1, conv3_2), dim=1) #not sure
+        print('stem - after concate: ' + str(out.size()))
         return out
 
 
@@ -35,23 +41,34 @@ class inceptionA(nn.Module):
         self.layer3_1 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
                                       nn.Conv3d(in_channels=32, out_channels=384, kernel_size=1))
         self.layer3_2 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
-                                      nn.Conv3d(in_channels=32, out_channels=32, kernel_size=(3,3,1)),
+                                      nn.Conv3d(in_channels=32, out_channels=32, kernel_size=(3,3,3), padding=1),
                                       nn.Conv3d(in_channels=32, out_channels=384, kernel_size=1))
         self.layer3_3 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
-                                      nn.Conv3d(in_channels=32, out_channels=48, kernel_size=(3,3,1)),
-                                      nn.Conv3d(in_channels=48, out_channels=64, kernel_size=(3,3,1)),
+                                      nn.Conv3d(in_channels=32, out_channels=48, kernel_size=(3,3,3), padding=1),
+                                      nn.Conv3d(in_channels=48, out_channels=64, kernel_size=(3,3,3), padding=1),
                                       nn.Conv3d(in_channels=64, out_channels=384, kernel_size=1))
     def forward(self, x):
+        print('inceptionA - input: ' + str(x.size()))
         relu = self.layer1(x)
+        print('inceptionA - after layer1: ' + str(relu.size()))
         conv1 = self.layer2_1(relu)
+        print('inceptionA - after layer2_1: ' + str(conv1.size()))
         conv2 = self.layer2_2(relu)
+        print('inceptionA - after layer2_2: ' + str(conv2.size()))
         concat = torch.cat((conv1, conv2), dim=1)
+        print('inceptionA - after concat: ' + str(concat.size()))
         path3_1 = self.layer3_1(concat)
+        print('inceptionA - after layer3_1: ' + str(path3_1.size()))
         path3_2 = self.layer3_2(concat)
+        print('inceptionA - after layer3_2: ' + str(path3_2.size()))
         path3_3 = self.layer3_3(concat)
+        print('inceptionA - after layer3_3: ' + str(path3_3.size()))
         out = torch.add(path3_1, path3_2)
+        print('inceptionA - after concat first two: ' + str(out.size()))
         out = torch.add(out, path3_3)
+        print('inceptionA - after concat the 3rd one: ' + str(out.size()))
         out = torch.add(out, concat)
+        print('inceptionA - after concat the residual one: ' + str(out.size()))
 
         return out
 
@@ -62,20 +79,27 @@ class reductionA(nn.Module):
         self.layer1 = nn.ReLU(inplace=False)
         self.layer2_1 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
         self.layer2_2 = nn.Conv3d(in_channels=conv_in_channels, out_channels=32, kernel_size=(3,3,1), stride=2)
-        self.layer2_3 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=256, kernel_size=1, stride=1),
-                                      nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(3,3,1), stride=1),
-                                      nn.Conv3d(in_channels=256, out_channels=384, kernel_size=(3,3,1), stride=1))
+        self.layer2_3 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=256, kernel_size=1, stride=2, padding=3),
+                                      nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(3,3,3), stride=1),
+                                      nn.Conv3d(in_channels=256, out_channels=384, kernel_size=(3,3,2), stride=1))
 
 
 
     def forward(self, x):
+        print('reductionA - input: ' + str(x.size()))
         out = self.layer1(x)
+        print('reductionA - after layer1: ' + str(out.size()))
         out1 = self.layer2_1(out)
+        print('reductionA - after layer2_1: ' + str(out1.size()))
         out2 = self.layer2_2(out)
+        print('reductionA - after layer2_2: ' + str(out2.size()))
         out3 = self.layer2_3(out)
+        print('reductionA - after layer2_3: ' + str(out3.size()))
         out = torch.cat((out1, out2), dim=1)
+        print('reductionA - after concate path1 and path2: ' + str(out.size()))
         out = torch.cat((out, out3), dim=1)
-        return x
+        print('reductionA - after concate the 3rd path: ' + str(out.size()))
+        return out
 
 class fcn3dnet(nn.Module):
     def __init__(self, num_classes=2):
@@ -85,6 +109,7 @@ class fcn3dnet(nn.Module):
         self.block1 = stem(conv_in_channels=1)
 
         # inceptionA
+        # self.block2 = inceptionA(conv_in_channels=192)
         self.block2 = inceptionA(conv_in_channels=192)
 
         # reductionA
@@ -95,11 +120,11 @@ class fcn3dnet(nn.Module):
     def forward(self,x):
         print('The input size is: ' + str(x.size()))
         out = self.block1(x)
-        print('The size after stem: ' + str(out.size))
-        # out = self.block2(out)
-        # print('The size after inceptionA: ' + str(out.size))
-        # out = self.block3(out)
-        # print('The size after reductionA: ' + str(out.size))
+        print('The size after stem: ' + str(out.size()))
+        out = self.block2(out)
+        print('The size after inceptionA: ' + str(out.size))
+        out = self.block3(out)
+        print('The size after reductionA: ' + str(out.size))
 
         return out
 
