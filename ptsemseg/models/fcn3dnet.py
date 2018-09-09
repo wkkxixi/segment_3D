@@ -211,9 +211,10 @@ class fcn3dnet(nn.Module):
         self.block2 = inceptionA(conv_in_channels=192)
 
         # deconvolution 4x
-        self.deconv2 = nn.Sequential(nn.ConvTranspose3d(in_channels=384, out_channels=2048, kernel_size=(3,3,1), stride=2,
+        self.deconv2 = nn.Sequential(nn.ConvTranspose3d(in_channels=384, out_channels=192, kernel_size=(3,3,1), stride=2,
                                           output_padding=0),
-                                     nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=3, stride=2, output_padding=(9,9,5)))
+                                     nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
+                                     nn.ConvTranspose3d(in_channels=96, out_channels=1, kernel_size=(6, 6, 2)))
 
         # reductionA
         self.block3 = reductionA(conv_in_channels=384)
@@ -223,9 +224,11 @@ class fcn3dnet(nn.Module):
 
         # deconvolution 8x
         self.deconv3 = nn.Sequential(
-            nn.ConvTranspose3d(in_channels=896, out_channels=2048, kernel_size=(3, 3, 1), stride=2),
-            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=(3, 3, 1), stride=2, output_padding=0),
-            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=3, stride=2, output_padding=(9, 9, 5)))
+            nn.ConvTranspose3d(in_channels=896, out_channels=384, kernel_size=(3, 3, 1), stride=2),
+            nn.ConvTranspose3d(in_channels=384, out_channels=192, kernel_size=(3, 3, 1), stride=2,
+                               output_padding=0),
+            nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
+            nn.ConvTranspose3d(in_channels=96, out_channels=1, kernel_size=(6, 6, 2)))
 
         # reductionB
         self.block5 = reductionB(conv_in_channels=896)
@@ -234,10 +237,14 @@ class fcn3dnet(nn.Module):
         self.block6 = inceptionC(conv_in_channels=2048)
 
         # deconvolution 8x
-        self.deconv4 = nn.Sequential(nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=(3, 3, 1), stride=2, output_padding=(1,1,0)),
-            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=(3, 3, 1), stride=2),
-            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=(3, 3, 1), stride=2, output_padding=0),
-            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=3, stride=2, output_padding=(9, 9, 5)))
+        self.deconv4 = nn.Sequential(nn.ConvTranspose3d(in_channels=2048, out_channels=896, kernel_size=(3, 3, 1), stride=2, output_padding=(1,1,0)),
+                                     nn.ConvTranspose3d(in_channels=896, out_channels=384, kernel_size=(3, 3, 1),
+                                                        stride=2),
+                                     nn.ConvTranspose3d(in_channels=384, out_channels=192, kernel_size=(3, 3, 1),
+                                                        stride=2,
+                                                        output_padding=0),
+                                     nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
+                                     nn.ConvTranspose3d(in_channels=96, out_channels=1, kernel_size=(6, 6, 2)))
 
         #todo
 
