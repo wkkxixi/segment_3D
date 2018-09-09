@@ -202,9 +202,18 @@ class fcn3dnet(nn.Module):
         # stem
         self.block1 = stem(conv_in_channels=1)
 
+        # deconvolution 2x
+        self.deconv1 = nn.Sequential(nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
+                                     nn.ConvTranspose3d(in_channels=96, out_channels=1, kernel_size=(6,6,2)))
+
         # inceptionA
         # self.block2 = inceptionA(conv_in_channels=192)
         self.block2 = inceptionA(conv_in_channels=192)
+
+        # deconvolution 4x
+        self.deconv2 = nn.Sequential(nn.ConvTranspose3d(in_channels=384, out_channels=2048, kernel_size=(3,3,1), stride=2,
+                                          output_padding=0),
+                                     nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=3, stride=2, output_padding=(9,9,5)))
 
         # reductionA
         self.block3 = reductionA(conv_in_channels=384)
@@ -212,27 +221,48 @@ class fcn3dnet(nn.Module):
         # inceptionB
         self.block4 = inceptionB(conv_in_channels=896)
 
+        # deconvolution 8x
+        self.deconv3 = nn.Sequential(
+            nn.ConvTranspose3d(in_channels=896, out_channels=2048, kernel_size=(3, 3, 1), stride=2),
+            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=(3, 3, 1), stride=2, output_padding=0),
+            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=3, stride=2, output_padding=(9, 9, 5)))
+
         # reductionB
         self.block5 = reductionB(conv_in_channels=896)
 
         # inceptionC
         self.block6 = inceptionC(conv_in_channels=2048)
+
+        # deconvolution 8x
+        self.deconv4 = nn.Sequential(nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=(3, 3, 1), stride=2, output_padding=(1,1,0)),
+            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=(3, 3, 1), stride=2),
+            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=(3, 3, 1), stride=2, output_padding=0),
+            nn.ConvTranspose3d(in_channels=2048, out_channels=2048, kernel_size=3, stride=2, output_padding=(9, 9, 5)))
+
         #todo
 
     def forward(self,x):
         print('The input size is: ' + str(x.size()))
         out = self.block1(x)
         print('The size after stem: ' + str(out.size()))
+        out_deconv1 = self.deconv1(out)
+        print('The size after deconv1: ' + str(out_deconv1.size()))
         out = self.block2(out)
         print('The size after inceptionA: ' + str(out.size()))
+        out_deconv2 = self.deconv2(out)
+        print('The size after deconv1: ' + str(out_deconv2.size()))
         out = self.block3(out)
         print('The size after reductionA: ' + str(out.size()))
         out = self.block4(out)
         print('The size after inceptionB: ' + str(out.size()))
+        out_deconv3 = self.deconv3(out)
+        print('The size after deconv3: ' + str(out_deconv3.size()))
         out = self.block5(out)
         print('The size after reductionB: ' + str(out.size()))
         out = self.block6(out)
         print('The size after inceptionC: ' + str(out.size()))
+        out_deconv4 = self.deconv4(out)
+        print('The size after deconv4: ' + str(out_deconv4.size()))
 
         return out
 
