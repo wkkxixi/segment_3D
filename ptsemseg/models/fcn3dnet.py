@@ -257,7 +257,7 @@ class fcn3dnet(nn.Module):
         out = self.block2(out)
         print('The size after inceptionA: ' + str(out.size()))
         out_deconv2 = self.deconv2(out)
-        print('The size after deconv1: ' + str(out_deconv2.size()))
+        print('The size after deconv2: ' + str(out_deconv2.size()))
         out = self.block3(out)
         print('The size after reductionA: ' + str(out.size()))
         out = self.block4(out)
