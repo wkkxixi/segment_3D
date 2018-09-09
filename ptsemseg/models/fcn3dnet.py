@@ -80,7 +80,7 @@ class reductionA(nn.Module):
 
         self.layer1 = nn.ReLU(inplace=False)
         self.layer2_1 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
-        self.layer2_2 = nn.Conv3d(in_channels=conv_in_channels, out_channels=32, kernel_size=(3,3,1), stride=2)
+        self.layer2_2 = nn.Conv3d(in_channels=conv_in_channels, out_channels=128, kernel_size=(3,3,1), stride=2) # 32->128
         self.layer2_3 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=256, kernel_size=1, stride=1),
                                       nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(3,3,1), stride=1),
                                       nn.Conv3d(in_channels=256, out_channels=384, kernel_size=(3,3,1), stride=2, padding=(1,1,0)))
@@ -122,8 +122,10 @@ class inceptionB(nn.Module):
         print('inceptionB - after layer2_1: ' + str(out1.size()))
         out2 = self.layer2_2(out)
         print('inceptionB - after layer2_2: ' + str(out2.size()))
-        out = torch.add(out1, out2)
+        ret = torch.add(out1, out2)
         print('inceptionB - after adding 2_1 & 2_2: ' + str(out.size()))
+        out = torch.add(ret, out)
+        print('inceptionB - after adding residual path: ' + str(out.size()))
 
         # residual- add input after relu to the final output
 
@@ -140,7 +142,7 @@ class reductionB(nn.Module):
         self.layer2_3 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=256, kernel_size=1),
                                       nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(1,7,1), padding=(1,2,0)),
                                       nn.Conv3d(in_channels=256, out_channels=320, kernel_size=(7,1,1), padding=(2,1,0)),
-                                      nn.Conv3d(in_channels=320, out_channels=320, kernel_size=(3,3,1), stride=2))
+                                      nn.Conv3d(in_channels=320, out_channels=960, kernel_size=(3,3,1), stride=2))
 
     def forward(self, x):
         print('reductionB - input: ' + str(x.size()))
@@ -169,7 +171,8 @@ class inceptionC(nn.Module):
                                       nn.Conv3d(in_channels=192, out_channels=2048, kernel_size=1))
         self.layer2_2 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=1),
                                       nn.Conv3d(in_channels=192, out_channels=224, kernel_size=(1,3,1), padding=(0,1,0)),
-                                      nn.Conv3d(in_channels=224, out_channels=320, kernel_size=(3,1,1), padding=(1,0,0)))
+                                      nn.Conv3d(in_channels=224, out_channels=256, kernel_size=(3,1,1), padding=(1,0,0)),
+                                      nn.Conv3d(in_channels=256, out_channels=2048, kernel_size=1))
 
     def forward(self, x):
         print('inceptionC - input: ' + str(x.size()))
@@ -180,10 +183,15 @@ class inceptionC(nn.Module):
         out2 = self.layer2_2(out)
         print('inceptionC - after layer2_2: ' + str(out2.size()))
 
-        out = torch.cat((out1, out2),dim=1)
-        print('inceptionC - after concatenating layer2_1 & layer2_2: ' + str(out.size()))
+        # out = torch.cat((out1, out2),dim=1)
+        # print('inceptionC - after concatenating layer2_1 & layer2_2: ' + str(out.size()))
 
-        # residual- add input after relu to the final output
+        ret = torch.add(out1, out2)
+        print('inceptionC - after adding layer2_1 & layer2_2: ' + str(ret.size()))
+        out = torch.add(ret, out) # residual- add input after relu to the final output
+        print('inceptionC - after adding residual path: ' + str(out.size()))
+
+
 
         return out
 
@@ -202,13 +210,13 @@ class fcn3dnet(nn.Module):
         self.block3 = reductionA(conv_in_channels=384)
 
         # inceptionB
-        self.block4 = inceptionB(conv_in_channels=800)
+        self.block4 = inceptionB(conv_in_channels=896)
 
         # reductionB
         self.block5 = reductionB(conv_in_channels=896)
 
         # inceptionC
-        self.block6 = inceptionC(conv_in_channels=1408)
+        self.block6 = inceptionC(conv_in_channels=2048)
         #todo
 
     def forward(self,x):
