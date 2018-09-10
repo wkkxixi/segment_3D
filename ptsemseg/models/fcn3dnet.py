@@ -204,7 +204,7 @@ class fcn3dnet(nn.Module):
 
         # deconvolution 2x
         self.deconv1 = nn.Sequential(nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
-                                     nn.ConvTranspose3d(in_channels=96, out_channels=1, kernel_size=(6,6,2)))
+                                     nn.ConvTranspose3d(in_channels=96, out_channels=2, kernel_size=(6,6,2)))
 
         # inceptionA
         # self.block2 = inceptionA(conv_in_channels=192)
@@ -214,7 +214,7 @@ class fcn3dnet(nn.Module):
         self.deconv2 = nn.Sequential(nn.ConvTranspose3d(in_channels=384, out_channels=192, kernel_size=(3,3,1), stride=2,
                                           output_padding=0),
                                      nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
-                                     nn.ConvTranspose3d(in_channels=96, out_channels=1, kernel_size=(6, 6, 2)))
+                                     nn.ConvTranspose3d(in_channels=96, out_channels=2, kernel_size=(6, 6, 2)))
 
         # reductionA
         self.block3 = reductionA(conv_in_channels=384)
@@ -228,7 +228,7 @@ class fcn3dnet(nn.Module):
             nn.ConvTranspose3d(in_channels=384, out_channels=192, kernel_size=(3, 3, 1), stride=2,
                                output_padding=0),
             nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
-            nn.ConvTranspose3d(in_channels=96, out_channels=1, kernel_size=(6, 6, 2)))
+            nn.ConvTranspose3d(in_channels=96, out_channels=2, kernel_size=(6, 6, 2)))
 
         # reductionB
         self.block5 = reductionB(conv_in_channels=896)
@@ -244,7 +244,8 @@ class fcn3dnet(nn.Module):
                                                         stride=2,
                                                         output_padding=0),
                                      nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
-                                     nn.ConvTranspose3d(in_channels=96, out_channels=1, kernel_size=(6, 6, 2)))
+                                     nn.ConvTranspose3d(in_channels=96, out_channels=2, kernel_size=(6, 6, 2)))
+
 
         #todo
 
@@ -271,6 +272,10 @@ class fcn3dnet(nn.Module):
         out_deconv4 = self.deconv4(out)
         print('The size after deconv4: ' + str(out_deconv4.size()))
 
-        return out
+        add_all_deconv = torch.add(out_deconv1, out_deconv2)
+        add_all_deconv = torch.add(add_all_deconv, out_deconv3)
+        add_all_deconv = torch.add(add_all_deconv, out_deconv4)
+
+        return add_all_deconv
 
 

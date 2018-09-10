@@ -6,7 +6,7 @@ from ptsemseg.models.fcn3dnet import *
 fcn3dnet_model = fcn3dnet(num_classes=2)
 # fcn3dnet_model
 
-fake_im_num = 20
+fake_im_num = 1
 numpy_fake_image = np.random.rand(fake_im_num, 1, 160, 160, 8)
 tensor_fake_image = torch.FloatTensor(numpy_fake_image)
 print(tensor_fake_image.size())
