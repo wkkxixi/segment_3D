@@ -23,19 +23,21 @@ def train(cfg):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Setup Augmentations
-    data_aug = Compose([RandomRotate(10), RandomHorizontallyFlip()])
+    data_aug = Compose([RandomRotate(10), RandomHorizontallyFlip()]) # a series of augmentation; when called, return img and mask
 
     # Setup Dataloader
-    data_loader = get_loader(cfg['data']['dataset'])
-    data_path = get_data_path(cfg['data']['dataset'])
+    data_loader = get_loader(cfg['data']['dataset']) # the loader class
+    data_path = get_data_path(cfg['data']['dataset']) # the path to the dataset
 
+    #dataset from which to load training data
     t_loader = data_loader(
-        data_path,
+        data_path, # root is the path to the dataset
         is_transform=True,
-        split=cfg['data']['train_split'],
-        img_size=(cfg['data']['img_rows'], cfg['data']['img_cols']),
-        augmentations=data_aug)
+        split=cfg['data']['train_split'], # =>train_aug?? (train, val, trainval)
+        img_size=(cfg['data']['img_rows'], cfg['data']['img_cols']), # =>256, 256
+        augmentations=data_aug)  # ????No 'augmentations' as parameter in pascalVOCLoader class
 
+    # dataset from which to load validation data
     v_loader = data_loader(
         data_path,
         is_transform=True,
@@ -43,15 +45,16 @@ def train(cfg):
         img_size=(cfg['data']['img_rows'], cfg['data']['img_cols']),
     )
 
-    n_classes = t_loader.n_classes
+    n_classes = t_loader.n_classes # defined in the loader class
     trainloader = data.DataLoader(
         t_loader, batch_size=cfg['training']['batch_size'], num_workers=8, shuffle=True
-    )
+    ) # 8 subprocesses will be used to load data; have the data shuffled each epoch
 
     valloader = data.DataLoader(v_loader, batch_size=cfg['training']['batch_size'], num_workers=8)
+    # data will not be shuffled during validation
 
     # Setup Metrics
-    running_metrics_val = runningScore(n_classes)
+    running_metrics_val = runningScore(n_classes) # a confusion matrix is created
 
     # Setup visdom for visualization
     if cfg['training']['visdom']:
