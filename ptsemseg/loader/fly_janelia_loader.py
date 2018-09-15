@@ -1,3 +1,8 @@
+DEBUG=False
+def log(s):
+    if DEBUG:
+        print(s)
+
 from torch.utils import data
 from torchvision import transforms
 import numpy as np
@@ -13,9 +18,22 @@ from random import randint
 class flyJaneliaLoader(data.Dataset):
     def __init__(
         self,
-        root
+        root,
+        split,
+        is_transform=False,
+        # img_size=(480, 640),
+        augmentations=None,
+        img_norm=True,
+        data_split_info=None,
+        patch_size=None
     ):
         self.root = os.path.expanduser(root)
+        self.is_transform = is_transform
+        self.n_classes = 2
+        self.augmentations = augmentations
+        self.data_split_info = data_split_info
+        self.patch_size = 512 if patch_size is None else patch_size
+        self.split = split
         self.nameList, self.xList, self.yList, self.zList = self.getInfoLists()
 
         # self.tf = transforms.Compose([transforms.ToTensor(),
@@ -49,10 +67,16 @@ class flyJaneliaLoader(data.Dataset):
             content = f.readlines()
         content = [x.strip() for x in content]
         for c in content:
+            if self.split == 'train':
+                if (c.split()[0]).split('.tif')[0] in self.data_split_info['val_indices']:
+                    continue
+            elif self.split == 'val':
+                if not (c.split()[0]).split('.tif')[0] in self.data_split_info['val_indices']:
+                    continue
             nameList.append((c.split()[0]).split('.tif')[0])
-            xList.append(c.split()[1])
-            yList.append(c.split()[2])
-            zList.append(c.split()[3])
+            xList.append(int(c.split()[1]))
+            yList.append(int(c.split()[2]))
+            zList.append(int(c.split()[3]))
         return nameList, xList, yList, zList
 
     # find 160x160x8 patch for the image in given index

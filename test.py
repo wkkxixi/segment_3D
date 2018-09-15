@@ -10,7 +10,7 @@ import torch
 
 import math
 import numbers
-import random
+# import random
 import numpy as np
 
 from PIL import Image, ImageOps
@@ -42,7 +42,7 @@ from utils.io import *
 import numpy as np
 from scipy.ndimage.interpolation import zoom
 from os.path import join as pjoin
-from random import randint
+# from random import randint
 from torchvision import transforms
 
 # how to keep the image same after tensor
@@ -108,4 +108,76 @@ def transforms_tensor():
     writetiff3d('/Users/wonh/Desktop/test3.tif', img)
     print(img)
 
-transforms_tensor()
+# transforms_tensor()
+def tensor_array():
+    a = np.ndarray([1,2,3])
+    a = ToTensor()(a)
+    print(a)
+    log('')
+
+# tensor_array()
+
+def usage_of_in():
+    if 'a' in 'apple':
+        print('yes')
+# usage_of_in()
+
+def usage_of_random_shuffle():
+    from random import shuffle
+    a = [1,2,3,4]
+    b = a[:-1]
+    shuffle(a)
+    print(a)
+    print(b)
+    shuffle(b)
+    print(b)
+    print(a)
+
+# usage_of_random_shuffle()
+
+def usage_of_large_brackets():
+    file_paths = 'file path'
+    val_case_index = [1,2,3]
+    case_index = [4,5,6]
+
+    return {'file_paths': file_paths, 'val_case_index': val_case_index, 'case_index': case_index}
+
+# a = usage_of_large_brackets()
+# print(a)
+# print(a['file_paths'])
+
+def learn_yaml():
+    import yaml
+    with open('/Users/wonh/y3s2/isbi/segment_3D/configs/fcn3d_fly.yml') as fp:
+        cfg = yaml.load(fp)
+    # a = cfg['training']['patch_size']
+    # a = a.split(',')
+    # a = [int(tmp) for tmp in a]
+    # print(a)
+    print(cfg['training'].get('patch_size'))
+    print(cfg['training'].get('patch_size', None))
+    print(cfg['training']['patch_size'].items())
+    patch_size = [para for axis, para in cfg['training']['patch_size'].items()]
+    print(patch_size)
+
+    # print(cfg.get('data'))
+# learn_yaml()
+
+ # def learn_seed():
+ #     import random
+ #     random.seed(1)
+ #     print(random.randint(1, 10))
+def learn_seed():
+    import random
+    random.seed(1)
+    a = random.randint(1,10)
+    print(a)
+# learn_seed()
+
+def learn_pjoin():
+    root = '/Users/wonh/Desktop/flyJanelia'
+    a = pjoin(root, 'images')
+    print(a)
+learn_pjoin()
+
+

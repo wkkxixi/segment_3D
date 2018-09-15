@@ -1,0 +1,3 @@
+2018-09-16 02:25:08,425 INFO Let the games begin
+2018-09-16 02:25:08,427 INFO Cross Entropy's Weight:tensor([  1.0030, 333.3333])
+2018-09-16 02:25:08,428 INFO Using No Augmentations

@@ -2,24 +2,24 @@ model:
     arch: fcn3dnet
 data:
     dataset: flyJanelia
-    train_split: train_aug
+    train_split: train
     val_split: val
     img_rows: 'same'
     img_cols: 'same'
-    path: ./flyJanelia/
+    path: '/Users/wonh/Desktop/flyJanelia/images/'
 training:
     train_iters: 300000
     batch_size: 1
     val_interval: 1000
-    n_workers: 16
-    print_interval: 50
+    n_workers: 3
+    print_interval: 1
     optimizer:
         name: 'sgd'
-        lr: 1.0e-10
+        lr: 1.0e-3
         weight_decay: 0.0005
-        momentum: 0.99
+        momentum: 0.9
     loss:
-        name: 'cross_entropy'
-        size_average: False
+        name: 'cross_entropy3d'
+        size_average: True
     lr_schedule:
     resume: fcn3d_fly_best_model.pkl

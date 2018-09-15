@@ -1,0 +1,17 @@
+2018-09-16 02:34:06,662 INFO Let the games begin
+2018-09-16 02:34:06,664 INFO Cross Entropy's Weight:tensor([  1.0030, 333.3333])
+2018-09-16 02:34:06,664 INFO Using No Augmentations
+2018-09-16 02:34:07,157 INFO Using sgd optimizer
+2018-09-16 02:34:07,157 INFO Using optimizer SGD (
+Parameter Group 0
+    dampening: 0
+    lr: 0.001
+    momentum: 0.9
+    nesterov: False
+    weight_decay: 0.0005
+)
+2018-09-16 02:34:07,158 INFO Using cross_entropy3d with {'size_average': True} params
+2018-09-16 02:34:07,158 INFO Using loss functools.partial(<function cross_entropy3d at 0xb13bc0620>, size_average=True)
+2018-09-16 02:34:07,158 INFO No checkpoint found at 'fcn3d_fly_best_model.pkl'
+2018-09-16 02:34:07,158 INFO Training from 0th iteration
+

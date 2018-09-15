@@ -196,7 +196,7 @@ class inceptionC(nn.Module):
         return out
 
 class fcn3dnet(nn.Module):
-    def __init__(self, num_classes=2):
+    def __init__(self, n_classes=2):
         super(fcn3dnet, self).__init__()
 
         # stem
