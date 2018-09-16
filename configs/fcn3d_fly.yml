@@ -8,14 +8,14 @@ data:
     img_cols: 'same'
     path: '/Users/wonh/Desktop/flyJanelia/'
 training:
-    train_iters: 37000
-    batch_size: 1
+    train_iters: 3
+    batch_size: 3
     patch_size:
         x: 160
         y: 160
         z: 8
     cross_entropy_ratio: 0.003
-    val_interval: 1000
+    val_interval: 2
     n_workers: 3
     print_interval: 1
     print_interval_per_batch: False

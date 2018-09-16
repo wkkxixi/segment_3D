@@ -98,8 +98,7 @@ class flyJaneliaLoader(data.Dataset):
         # lbl = self.tf(lbl)
 
         img = np.stack([img], axis=0)
-        # lbl = np.stack([lbl])
-        # img = img.transpose(3, 0, 1, 2)
+        lbl = (lbl > 0).astype('int')
         img = torch.from_numpy(img).float()
         lbl = torch.from_numpy(lbl).long()
 

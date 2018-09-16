@@ -199,5 +199,38 @@ def learn_stack():
     # a = np.stack([a], axis=3)
     a = np.stack([a,b], axis=0)
     print(a[1,:,:])
-learn_stack()
+# learn_stack()
 
+def learn_astype():
+    lbl = np.zeros(shape=(3,3))
+    lbl_background = (lbl == 0).astype('int')
+    print(lbl_background)
+    lbl = torch.from_numpy(lbl_background).long()
+    print(lbl)
+# learn_astype()
+
+def test_label():
+    lbl = loadtiff3d('/Users/wonh/Desktop/flyJanelia/labels/12.tif')
+    lbl_background = (lbl == 0).astype('int')
+    lbl_foreground = (lbl != 0).astype('int')
+    lbl = np.stack([lbl_foreground, lbl_background], axis=3)
+    print(lbl.shape)
+    # print('lbl foreground sum: {} background sum: {}'.format(np.sum(lbl_background), np.sum(lbl_foreground)))
+    # lbl = torch.from_numpy(lbl).long()
+
+# test_label()
+
+def test_matrix_add():
+    a = np.asarray([1,2,3])
+    a = a + 1
+    print(a)
+# test_matrix_add()
+
+def test_zoom():
+    a = np.ones(shape=(3,3,3))
+    a[2][2][2] = 99
+    print(a)
+    a = torch.from_numpy(a).long()
+    print(a.max())
+
+test_zoom()
