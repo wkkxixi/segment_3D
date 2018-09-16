@@ -1,3 +1,8 @@
+DEBUG=False
+def log(s):
+    if DEBUG:
+        log(s)
+
 import torch.nn as nn
 from ptsemseg.models.utils import *
 
@@ -17,17 +22,17 @@ class stem(nn.Module):
                                    nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1)))
 
     def forward(self, x):
-        print('stem - input: ' + str(x.size()))
+        log('stem - input: ' + str(x.size()))
         conv1 = self.layer1(x)
-        print('stem - after layer1: ' + str(conv1.size()))
+        log('stem - after layer1: ' + str(conv1.size()))
         conv2 = self.layer2(conv1)
-        print('stem - after layer2: ' + str(conv2.size()))
+        log('stem - after layer2: ' + str(conv2.size()))
         conv3_1 = self.path1(conv2)
-        print('stem - after layer2 path1: ' + str(conv3_1.size()))
+        log('stem - after layer2 path1: ' + str(conv3_1.size()))
         conv3_2 = self.path2(conv2)
-        print('stem - after layer2 path2: ' + str(conv3_2.size()))
+        log('stem - after layer2 path2: ' + str(conv3_2.size()))
         out = torch.cat((conv3_1, conv3_2), dim=1) #not sure
-        print('stem - after concate: ' + str(out.size()))
+        log('stem - after concate: ' + str(out.size()))
         return out
 
 
@@ -48,27 +53,27 @@ class inceptionA(nn.Module):
                                       nn.Conv3d(in_channels=48, out_channels=64, kernel_size=(3,3,1), padding=(1,1,0)),
                                       nn.Conv3d(in_channels=64, out_channels=384, kernel_size=1))
     def forward(self, x):
-        print('inceptionA - input: ' + str(x.size()))
+        log('inceptionA - input: ' + str(x.size()))
         relu = self.layer1(x)
-        print('inceptionA - after layer1: ' + str(relu.size()))
+        log('inceptionA - after layer1: ' + str(relu.size()))
         conv1 = self.layer2_1(relu)
-        print('inceptionA - after layer2_1: ' + str(conv1.size()))
+        log('inceptionA - after layer2_1: ' + str(conv1.size()))
         conv2 = self.layer2_2(relu)
-        print('inceptionA - after layer2_2: ' + str(conv2.size()))
+        log('inceptionA - after layer2_2: ' + str(conv2.size()))
         concat = torch.cat((conv1, conv2), dim=1)
-        print('inceptionA - after concat: ' + str(concat.size()))
+        log('inceptionA - after concat: ' + str(concat.size()))
         path3_1 = self.layer3_1(concat)
-        print('inceptionA - after layer3_1: ' + str(path3_1.size()))
+        log('inceptionA - after layer3_1: ' + str(path3_1.size()))
         path3_2 = self.layer3_2(concat)
-        print('inceptionA - after layer3_2: ' + str(path3_2.size()))
+        log('inceptionA - after layer3_2: ' + str(path3_2.size()))
         path3_3 = self.layer3_3(concat)
-        print('inceptionA - after layer3_3: ' + str(path3_3.size()))
+        log('inceptionA - after layer3_3: ' + str(path3_3.size()))
         out = torch.add(path3_1, path3_2)
-        print('inceptionA - after concat first two: ' + str(out.size()))
+        log('inceptionA - after concat first two: ' + str(out.size()))
         out = torch.add(out, path3_3)
-        print('inceptionA - after concat the 3rd one: ' + str(out.size()))
+        log('inceptionA - after concat the 3rd one: ' + str(out.size()))
         out = torch.add(out, concat)
-        print('inceptionA - after concat the residual one: ' + str(out.size()))
+        log('inceptionA - after concat the residual one: ' + str(out.size()))
 
         # residual- add input after relu to the final output
 
@@ -88,19 +93,19 @@ class reductionA(nn.Module):
 
 
     def forward(self, x):
-        print('reductionA - input: ' + str(x.size()))
+        log('reductionA - input: ' + str(x.size()))
         out = self.layer1(x)
-        print('reductionA - after layer1: ' + str(out.size()))
+        log('reductionA - after layer1: ' + str(out.size()))
         out1 = self.layer2_1(out)
-        print('reductionA - after layer2_1: ' + str(out1.size()))
+        log('reductionA - after layer2_1: ' + str(out1.size()))
         out2 = self.layer2_2(out)
-        print('reductionA - after layer2_2: ' + str(out2.size()))
+        log('reductionA - after layer2_2: ' + str(out2.size()))
         out3 = self.layer2_3(out)
-        print('reductionA - after layer2_3: ' + str(out3.size()))
+        log('reductionA - after layer2_3: ' + str(out3.size()))
         out = torch.cat((out1, out2), dim=1)
-        print('reductionA - after concate path1 and path2: ' + str(out.size()))
+        log('reductionA - after concate path1 and path2: ' + str(out.size()))
         out = torch.cat((out, out3), dim=1)
-        print('reductionA - after concate the 3rd path: ' + str(out.size()))
+        log('reductionA - after concate the 3rd path: ' + str(out.size()))
         return out
 
 class inceptionB(nn.Module):
@@ -115,17 +120,17 @@ class inceptionB(nn.Module):
                                       nn.Conv3d(in_channels=128, out_channels=128, kernel_size=(7,1,1), padding=(2,1,0)),
                                       nn.Conv3d(in_channels=128, out_channels=896, kernel_size=1))
     def forward(self, x):
-        print('inceptionB - input: ' + str(x.size()))
+        log('inceptionB - input: ' + str(x.size()))
         out = self.layer1(x)
-        print('inceptionB - after layer1: ' + str(out.size()))
+        log('inceptionB - after layer1: ' + str(out.size()))
         out1 = self.layer2_1(out)
-        print('inceptionB - after layer2_1: ' + str(out1.size()))
+        log('inceptionB - after layer2_1: ' + str(out1.size()))
         out2 = self.layer2_2(out)
-        print('inceptionB - after layer2_2: ' + str(out2.size()))
+        log('inceptionB - after layer2_2: ' + str(out2.size()))
         ret = torch.add(out1, out2)
-        print('inceptionB - after adding 2_1 & 2_2: ' + str(out.size()))
+        log('inceptionB - after adding 2_1 & 2_2: ' + str(out.size()))
         out = torch.add(ret, out)
-        print('inceptionB - after adding residual path: ' + str(out.size()))
+        log('inceptionB - after adding residual path: ' + str(out.size()))
 
         # residual- add input after relu to the final output
 
@@ -145,19 +150,19 @@ class reductionB(nn.Module):
                                       nn.Conv3d(in_channels=320, out_channels=960, kernel_size=(3,3,1), stride=2))
 
     def forward(self, x):
-        print('reductionB - input: ' + str(x.size()))
+        log('reductionB - input: ' + str(x.size()))
         out = self.layer1(x)
-        print('reductionB - after layer1: ' + str(out.size()))
+        log('reductionB - after layer1: ' + str(out.size()))
         out1 = self.layer2_1(out)
-        print('reductionB - after layer2_1: ' + str(out1.size()))
+        log('reductionB - after layer2_1: ' + str(out1.size()))
         out2 = self.layer2_2(out)
-        print('reductionB - after layer2_2: ' + str(out2.size()))
+        log('reductionB - after layer2_2: ' + str(out2.size()))
         out3 = self.layer2_3(out)
-        print('reductionB - after layer2_3: ' + str(out3.size()))
+        log('reductionB - after layer2_3: ' + str(out3.size()))
         out = torch.cat((out1, out2),dim=1)
-        print('reductionB - after concatenating layer2_1 & layer2_2: ' + str(out.size()))
+        log('reductionB - after concatenating layer2_1 & layer2_2: ' + str(out.size()))
         out = torch.cat((out, out3), dim=1)
-        print('reductionB - after concatenating  & layer2_3: ' + str(out.size()))
+        log('reductionB - after concatenating  & layer2_3: ' + str(out.size()))
 
         return out
 
@@ -175,21 +180,21 @@ class inceptionC(nn.Module):
                                       nn.Conv3d(in_channels=256, out_channels=2048, kernel_size=1))
 
     def forward(self, x):
-        print('inceptionC - input: ' + str(x.size()))
+        log('inceptionC - input: ' + str(x.size()))
         out = self.layer1(x)
-        print('inceptionC - after layer1: ' + str(out.size()))
+        log('inceptionC - after layer1: ' + str(out.size()))
         out1 = self.layer2_1(out)
-        print('inceptionC - after layer2_1: ' + str(out1.size()))
+        log('inceptionC - after layer2_1: ' + str(out1.size()))
         out2 = self.layer2_2(out)
-        print('inceptionC - after layer2_2: ' + str(out2.size()))
+        log('inceptionC - after layer2_2: ' + str(out2.size()))
 
         # out = torch.cat((out1, out2),dim=1)
-        # print('inceptionC - after concatenating layer2_1 & layer2_2: ' + str(out.size()))
+        # log('inceptionC - after concatenating layer2_1 & layer2_2: ' + str(out.size()))
 
         ret = torch.add(out1, out2)
-        print('inceptionC - after adding layer2_1 & layer2_2: ' + str(ret.size()))
+        log('inceptionC - after adding layer2_1 & layer2_2: ' + str(ret.size()))
         out = torch.add(ret, out) # residual- add input after relu to the final output
-        print('inceptionC - after adding residual path: ' + str(out.size()))
+        log('inceptionC - after adding residual path: ' + str(out.size()))
 
 
 
@@ -250,27 +255,27 @@ class fcn3dnet(nn.Module):
         #todo
 
     def forward(self,x):
-        print('The input size is: ' + str(x.size()))
+        log('The input size is: ' + str(x.size()))
         out = self.block1(x)
-        print('The size after stem: ' + str(out.size()))
+        log('The size after stem: ' + str(out.size()))
         out_deconv1 = self.deconv1(out)
-        print('The size after deconv1: ' + str(out_deconv1.size()))
+        log('The size after deconv1: ' + str(out_deconv1.size()))
         out = self.block2(out)
-        print('The size after inceptionA: ' + str(out.size()))
+        log('The size after inceptionA: ' + str(out.size()))
         out_deconv2 = self.deconv2(out)
-        print('The size after deconv2: ' + str(out_deconv2.size()))
+        log('The size after deconv2: ' + str(out_deconv2.size()))
         out = self.block3(out)
-        print('The size after reductionA: ' + str(out.size()))
+        log('The size after reductionA: ' + str(out.size()))
         out = self.block4(out)
-        print('The size after inceptionB: ' + str(out.size()))
+        log('The size after inceptionB: ' + str(out.size()))
         out_deconv3 = self.deconv3(out)
-        print('The size after deconv3: ' + str(out_deconv3.size()))
+        log('The size after deconv3: ' + str(out_deconv3.size()))
         out = self.block5(out)
-        print('The size after reductionB: ' + str(out.size()))
+        log('The size after reductionB: ' + str(out.size()))
         out = self.block6(out)
-        print('The size after inceptionC: ' + str(out.size()))
+        log('The size after inceptionC: ' + str(out.size()))
         out_deconv4 = self.deconv4(out)
-        print('The size after deconv4: ' + str(out_deconv4.size()))
+        log('The size after deconv4: ' + str(out_deconv4.size()))
 
         add_all_deconv = torch.add(out_deconv1, out_deconv2)
         add_all_deconv = torch.add(add_all_deconv, out_deconv3)
