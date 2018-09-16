@@ -8,14 +8,14 @@ data:
     img_cols: 'same'
     path: '/Users/wonh/Desktop/flyJanelia/'
 training:
-    train_iters: 3
-    batch_size: 3
+    train_iters: 2
+    batch_size: 2
     patch_size:
         x: 160
         y: 160
         z: 8
     cross_entropy_ratio: 0.003
-    val_interval: 2
+    val_interval: 1
     n_workers: 3
     print_interval: 1
     print_interval_per_batch: False
@@ -32,5 +32,6 @@ training:
         size_average: True
     lr_schedule:
         name: 'poly_lr'
-        max_iter: 37000
-    resume: fcn3d_fly_best_model.pkl
+        max_iter: 2
+#    resume: fcn3d_fly_best_model.pkl # path to the model saved before
+    resume: '/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl'

@@ -1,5 +1,9 @@
 # Adapted from score written by wkentaro
 # https://github.com/wkentaro/pytorch-fcn/blob/master/torchfcn/utils.py
+DEBUG=False
+def log(s):
+    if DEBUG:
+        print(s)
 
 import numpy as np
 
@@ -19,6 +23,7 @@ class runningScore(object):
         return hist
 
     def update(self, label_trues, label_preds):
+        log('metrics=>update(): len(label_preds): {}'.format(len(label_preds)))
         for data_idx in range(label_preds.shape[0]):
             label_pred, label_true = label_preds[data_idx], label_trues[data_idx]
             dice = np.sum(label_pred[label_true == 1]) * 2.0 / (np.sum(label_pred) + np.sum(label_true))
@@ -51,7 +56,7 @@ class runningScore(object):
                 "Mean    Acc    : \t": acc_cls,
                 "FreqW   Acc    : \t": fwavacc,
                 "Mean IoU       : \t": mean_iu,
-                "Patch DICE LIST: \t": self.patch_dice_list,
+                # "Patch DICE LIST: \t": self.patch_dice_list, # remove list since tensorboard summary scalar will raise error when it is not a single value
                 "Patch DICE AVER: \t": sum(self.patch_dice_list)/len(self.patch_dice_list)
             },
             cls_iu,

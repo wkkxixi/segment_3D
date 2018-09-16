@@ -156,11 +156,13 @@ def learn_yaml():
     # a = a.split(',')
     # a = [int(tmp) for tmp in a]
     # print(a)
-    print(cfg['training'].get('patch_size'))
-    print(cfg['training'].get('patch_size', None))
-    print(cfg['training']['patch_size'].items())
-    patch_size = [para for axis, para in cfg['training']['patch_size'].items()]
-    print(patch_size)
+    # print(cfg['training'].get('patch_size'))
+    # print(cfg['training'].get('patch_size', None))
+    # print(cfg['training']['patch_size'].items())
+    # patch_size = [para for axis, para in cfg['training']['patch_size'].items()]
+    # print(patch_size)
+    if cfg['model']['arch'] == 'fcn3dnet':
+        print('yeah')
 
     # print(cfg.get('data'))
 # learn_yaml()
@@ -233,4 +235,13 @@ def test_zoom():
     a = torch.from_numpy(a).long()
     print(a.max())
 
-test_zoom()
+# test_zoom()
+
+def learn_makenp():
+    from tensorboardX.summary import make_np
+    scalar = [0.3]
+    print(scalar)
+    scalar = make_np(scalar)
+    print(scalar.squeeze().ndim) # scalar.squeeze().ndim == 0
+
+learn_makenp()

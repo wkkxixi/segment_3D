@@ -1,4 +1,4 @@
-DEBUG=True
+DEBUG=False
 def log(s):
     if DEBUG:
         print(s)
@@ -59,6 +59,7 @@ class flyJaneliaLoader(data.Dataset):
         return im, lbl
 
     def getInfoLists(self):
+        log('val_indices: {}'.format(self.data_split_info['val_indices']))
         nameList = []
         xList = []
         yList = []
@@ -68,15 +69,18 @@ class flyJaneliaLoader(data.Dataset):
         content = [x.strip() for x in content]
         for c in content:
             if self.split == 'train':
+                log('loader init: train')
                 if (c.split()[0]).split('.tif')[0] in self.data_split_info['val_indices']:
                     continue
             elif self.split == 'val':
+                log('loader init: val')
                 if not (c.split()[0]).split('.tif')[0] in self.data_split_info['val_indices']:
                     continue
             nameList.append((c.split()[0]).split('.tif')[0])
             xList.append(int(c.split()[1]))
             yList.append(int(c.split()[2]))
             zList.append(int(c.split()[3]))
+        log('loader init for {} has nameList({})'.format(self.split, len(nameList)))
         return nameList, xList, yList, zList
 
     # find 160x160x8 patch for the image in given index

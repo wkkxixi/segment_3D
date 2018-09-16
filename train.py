@@ -1,4 +1,4 @@
-DEBUG=True
+DEBUG=False
 def log(s):
     if DEBUG:
         print(s)
@@ -15,7 +15,7 @@ def init_data_split(root):
     from os.path import join as pjoin
     root += 'images/'
     data_paths = glob(root + '*.tif')
-    ratio = 0.1
+    ratio = 0.3 # dataset has only 4 data, if you set ratio to 0.1 then there would be no validation set
     all_indices = [path.split('/')[-1].split('.tif')[0] for path in data_paths]
     shuffle(all_indices)
     val_indices = all_indices[:int(ratio*(len(all_indices)))]
@@ -140,6 +140,7 @@ def train(cfg, writer, logger):
 
     start_iter = 0
     if cfg['training']['resume'] is not None:
+        log('resume saved model')
         if os.path.isfile(cfg['training']['resume']):
             logger.info(
                 "Loading model and optimizer from checkpoint '{}'".format(cfg['training']['resume'])
@@ -156,6 +157,7 @@ def train(cfg, writer, logger):
             )
         else:
             logger.info("No checkpoint found at '{}'".format(cfg['training']['resume']))
+            log('no saved model found')
 
     val_loss_meter = averageMeter()
     time_meter = averageMeter()
@@ -206,11 +208,17 @@ def train(cfg, writer, logger):
         validation_check = (i_train_iter + 1) % cfg['training']['val_interval'] == 0 or \
                            (i_train_iter + 1) == cfg['training']['train_iters']
         if not validation_check:
-            print('')
+            print('no validation check')
         else:
             model.eval()
             with torch.no_grad():
-                for i_val, (images_val, labels_val) in tqdm(enumerate(valloader)):
+                log('start tqdm...')
+                # for i_val, (images_val, labels_val) in tqdm(enumerate(valloader)):
+                i_val = 0
+                # for i_val, (images_val, labels_val) in enumerate(valloader):
+                for (images_val, labels_val) in valloader:
+
+                    log('i_val: {} => inside for loop'.format(i_val))
                     images_val = images_val.to(device)
                     labels_val = labels_val.to(device)
 
@@ -226,10 +234,11 @@ def train(cfg, writer, logger):
 
                     running_metrics_val.update(gt, pred)
                     val_loss_meter.update(val_loss.item())
-
+                    i_val += 1
+                log('outside for loop tqdm')
             writer.add_scalar('loss/val_loss', val_loss_meter.avg, i_train_iter + 1)
             logger.info("Iter %d Loss: %.4f" % (i_train_iter + 1, val_loss_meter.avg))
-
+            log('get score...')
             '''
             This CODE-BLOCK is used to calculate and update the evaluation matrcs 
             '''
@@ -249,8 +258,8 @@ def train(cfg, writer, logger):
             '''
             This IF-CHECK is used to update the best model
             '''
-            if score["Mean IoU : \t"] >= best_iou:
-                best_iou = score["Mean IoU : \t"]
+            if score["Mean IoU       : \t"] >= best_iou:
+                best_iou = score["Mean IoU       : \t"]
                 state = {
                     "epoch": i_train_iter + 1,
                     "model_state": model.state_dict(),
