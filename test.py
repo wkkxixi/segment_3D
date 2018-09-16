@@ -1,247 +1,170 @@
+import sys, os
 import torch
-#
-# x = torch.randn(2, 3)
-# print(torch.cat((x,x,x), 0).size())
-# print(torch.cat((x,x,x), 1).size())
-# def foo():
-#     assert 0 == 1
-#
-# foo()
-
-import math
-import numbers
-# import random
+import visdom
+import argparse
+import timeit
 import numpy as np
+import scipy.misc as misc
+import torch.nn as nn
+import torch.nn.functional as F
+import torchvision.models as models
 
-from PIL import Image, ImageOps
+from torch.utils import data
+from tqdm import tqdm
 
-# zz = np.random.random((3,3))
-# mask = zz.copy()
-# mask = Image.fromarray(mask, mode="L")
-# print(zz)
-# img = Image.fromarray(zz, mode="RGB")
-# print(img.size)
-# print(np.array(img))
-# print(np.array(mask, dtype=np.uint8))
-# img_size = ('same', 'same')
-# img_size = img_size if isinstance(img_size, tuple) else (img_size, img_size)
-# print(img_size)
-# with open('/Users/wonh/Desktop/flyJanelia/datainfo/datainfo.txt') as f:
-#     content = f.readlines()
-# # you may also want to remove whitespace characters like `\n` at the end of each line
-# content = [x.strip() for x in content]
-# for c in content:
-#     print(c.split()[0])
+from ptsemseg.models import get_model
+from ptsemseg.loader import get_loader, get_data_path
+from ptsemseg.utils import convert_state_dict
 
-# im = Image.open('/Users/wonh/Desktop/flyJanelia/images/1.tif')
-# print(np.array(im).shape)
-
-from PIL import Image
-from torchvision.transforms import ToTensor
-from utils.io import *
-import numpy as np
-from scipy.ndimage.interpolation import zoom
-from os.path import join as pjoin
-# from random import randint
-from torchvision import transforms
-
-# how to keep the image same after tensor
-def np_tensor_np():
-    image = loadtiff3d('/Users/wonh/Desktop/flyJanelia/images/1.tif') # x, y, z
-    image = ToTensor()(image) # z, x, y
-    image = image.numpy()*255
-    image = image.astype('uint8') # important
-    image = np.transpose(image, (1,2,0)) # z, x, y => x, y, z
-
-def os_expand_user():
-    root = '/Users/wonh/Desktop/flyJanelia/'
-    path = os.path.expanduser(root)
+try:
+    import pydensecrf.densecrf as dcrf
+except:
+    print(
+        "Failed to import pydensecrf,\
+           CRF post-processing will not work"
+    )
 
 
-def getInfoLists(root):
-    nameList = []
-    xList = []
-    yList = []
-    zList = []
-    with open(root + '/datainfo/datainfo.txt') as f:
-        content = f.readlines()
-    content = [x.strip() for x in content]
-    for c in content:
-        nameList.append(c.split()[0])
-        xList.append(c.split()[1])
-        yList.append(c.split()[2])
-        zList.append(c.split()[3])
-    return nameList, xList, yList, zList
+def test(args):
 
-# print(pjoin('/Users/wonh/Desktop/flyJanelia', 'images', '1.tif'))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def resize_small_img(filepath):
-    img = loadtiff3d(filepath)
-    x = max(img.shape[0], 160)/img.shape[0]
-    y = max(img.shape[1], 160)/img.shape[1]
-    z = max(img.shape[2], 8)/img.shape[2]
-    print((x,y,z))
-    img = zoom(img, (x,y,z))
+    model_file_name = os.path.split(args.model_path)[1]
+    model_name = model_file_name[: model_file_name.find("_")]
 
-    x = randint(0, img.shape[0]-160) if x == 1 else 0
-    y = randint(0, img.shape[1]-160) if y == 1 else 0
-    z = randint(0, img.shape[2] - 8) if z == 1 else 0
-    print((x,y,z))
-    img = img[x:x+160, y:y+160, z:z+8]
-    print(img.shape)
+    # Setup image
+    print("Read Input Image from : {}".format(args.img_path))
+    img = misc.imread(args.img_path)
 
-    # img = np.resize(img, (x,y,z))
-    writetiff3d('/Users/wonh/Desktop/test2.tif', img)
+    data_loader = get_loader(args.dataset)
+    data_path = get_data_path(args.dataset)
+    loader = data_loader(data_path, is_transform=True, img_norm=args.img_norm)
+    n_classes = loader.n_classes
 
-# resize_small_img('/Users/wonh/Desktop/flyJanelia/images/12.tif')
+    resized_img = misc.imresize(
+        img, (loader.img_size[0], loader.img_size[1]), interp="bicubic"
+    )
 
-def transforms_tensor():
-    tf = transforms.Compose([transforms.ToTensor(),
-                        transforms.Normalize([0.485, 0.456, 0.406],
-                                             [0.229, 0.224, 0.225])])
-    img = loadtiff3d('/Users/wonh/Desktop/flyJanelia/labels/12.tif')
+    orig_size = img.shape[:-1]
+    if model_name in ["pspnet", "icnet", "icnetBN"]:
+        # uint8 with RGB mode, resize width and height which are odd numbers
+        img = misc.imresize(img, (orig_size[0] // 2 * 2 + 1, orig_size[1] // 2 * 2 + 1))
+    else:
+        img = misc.imresize(img, (loader.img_size[0], loader.img_size[1]))
 
-    img = tf(img)
-    img = img.numpy() * 255
-    img = img.astype('uint8')  # important
-    img = np.transpose(img, (1, 2, 0))  # z, x, y => x, y, z
-    writetiff3d('/Users/wonh/Desktop/test3.tif', img)
-    print(img)
+    img = img[:, :, ::-1]
+    img = img.astype(np.float64)
+    img -= loader.mean
+    if args.img_norm:
+        img = img.astype(float) / 255.0
 
-# transforms_tensor()
-def tensor_array():
-    a = np.ndarray([1,2,3])
-    a = ToTensor()(a)
-    print(a)
-    a.view(1,1,2,3)
-    print(a)
-    # log('')
+    # NHWC -> NCHW
+    img = img.transpose(2, 0, 1)
+    img = np.expand_dims(img, 0)
+    img = torch.from_numpy(img).float()
 
-# tensor_array()
+    # Setup Model
+    model = get_model(model_name, n_classes, version=args.dataset)
+    state = convert_state_dict(torch.load(args.model_path)["model_state"])
+    model.load_state_dict(state)
+    model.eval()
+    model.to(device)
 
-def usage_of_in():
-    if 'a' in 'apple':
-        print('yes')
-# usage_of_in()
+    images = img.to(device)
+    outputs = model(images)
 
-def usage_of_random_shuffle():
-    from random import shuffle
-    a = [1,2,3,4]
-    b = a[:-1]
-    shuffle(a)
-    print(a)
-    print(b)
-    shuffle(b)
-    print(b)
-    print(a)
+    if args.dcrf:
+        unary = outputs.data.cpu().numpy()
+        unary = np.squeeze(unary, 0)
+        unary = -np.log(unary)
+        unary = unary.transpose(2, 1, 0)
+        w, h, c = unary.shape
+        unary = unary.transpose(2, 0, 1).reshape(loader.n_classes, -1)
+        unary = np.ascontiguousarray(unary)
 
-# usage_of_random_shuffle()
+        resized_img = np.ascontiguousarray(resized_img)
 
-def usage_of_large_brackets():
-    file_paths = 'file path'
-    val_case_index = [1,2,3]
-    case_index = [4,5,6]
+        d = dcrf.DenseCRF2D(w, h, loader.n_classes)
+        d.setUnaryEnergy(unary)
+        d.addPairwiseBilateral(sxy=5, srgb=3, rgbim=resized_img, compat=1)
 
-    return {'file_paths': file_paths, 'val_case_index': val_case_index, 'case_index': case_index}
+        q = d.inference(50)
+        mask = np.argmax(q, axis=0).reshape(w, h).transpose(1, 0)
+        decoded_crf = loader.decode_segmap(np.array(mask, dtype=np.uint8))
+        dcrf_path = args.out_path[:-4] + "_drf.png"
+        misc.imsave(dcrf_path, decoded_crf)
+        print("Dense CRF Processed Mask Saved at: {}".format(dcrf_path))
 
-# a = usage_of_large_brackets()
-# print(a)
-# print(a['file_paths'])
+    pred = np.squeeze(outputs.data.max(1)[1].cpu().numpy(), axis=0)
+    if model_name in ["pspnet", "icnet", "icnetBN"]:
+        pred = pred.astype(np.float32)
+        # float32 with F mode, resize back to orig_size
+        pred = misc.imresize(pred, orig_size, "nearest", mode="F")
 
-def learn_yaml():
-    import yaml
-    with open('/Users/wonh/y3s2/isbi/segment_3D/configs/fcn3d_fly.yml') as fp:
-        cfg = yaml.load(fp)
-    # a = cfg['training']['patch_size']
-    # a = a.split(',')
-    # a = [int(tmp) for tmp in a]
-    # print(a)
-    # print(cfg['training'].get('patch_size'))
-    # print(cfg['training'].get('patch_size', None))
-    # print(cfg['training']['patch_size'].items())
-    # patch_size = [para for axis, para in cfg['training']['patch_size'].items()]
-    # print(patch_size)
-    if cfg['model']['arch'] == 'fcn3dnet':
-        print('yeah')
+    decoded = loader.decode_segmap(pred)
+    print("Classes found: ", np.unique(pred))
+    misc.imsave(args.out_path, decoded)
+    print("Segmentation Mask Saved at: {}".format(args.out_path))
 
-    # print(cfg.get('data'))
-# learn_yaml()
 
- # def learn_seed():
- #     import random
- #     random.seed(1)
- #     print(random.randint(1, 10))
-def learn_seed():
-    import random
-    random.seed(1)
-    a = random.randint(1,10)
-    print(a)
-# learn_seed()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Params")
+    parser.add_argument(
+        "--model_path",
+        nargs="?",
+        type=str,
+        default="fcn8s_pascal_1_26.pkl",
+        help="Path to the saved model",
+    )
+    parser.add_argument(
+        "--dataset",
+        nargs="?",
+        type=str,
+        default="pascal",
+        help="Dataset to use ['pascal, camvid, ade20k etc']",
+    )
 
-def learn_pjoin():
-    root = '/Users/wonh/Desktop/flyJanelia'
-    a = pjoin(root, 'images')
-    print(a)
-# learn_pjoin()
+    parser.add_argument(
+        "--img_norm",
+        dest="img_norm",
+        action="store_true",
+        help="Enable input image scales normalization [0, 1] \
+                              | True by default",
+    )
+    parser.add_argument(
+        "--no-img_norm",
+        dest="img_norm",
+        action="store_false",
+        help="Disable input image scales normalization [0, 1] |\
+                              True by default",
+    )
+    parser.set_defaults(img_norm=True)
 
-def learn_view():
-    a = np.ndarray([3,3])
-    # print(a.shape)
-    a = ToTensor()(a)
-    print(a)
-    # a.view(1,3,3)
-    # print(a)
+    parser.add_argument(
+        "--dcrf",
+        dest="dcrf",
+        action="store_true",
+        help="Enable DenseCRF based post-processing | \
+                              False by default",
+    )
+    parser.add_argument(
+        "--no-dcrf",
+        dest="dcrf",
+        action="store_false",
+        help="Disable DenseCRF based post-processing | \
+                              False by default",
+    )
+    parser.set_defaults(dcrf=False)
 
-# learn_view()
-
-def learn_stack():
-    a = np.ones(shape=(3,3,3))
-    # print(a)
-    b = np.ones(shape=(3, 3, 3))*99
-    # a = np.stack([a], axis=3)
-    a = np.stack([a,b], axis=0)
-    print(a[1,:,:])
-# learn_stack()
-
-def learn_astype():
-    lbl = np.zeros(shape=(3,3))
-    lbl_background = (lbl == 0).astype('int')
-    print(lbl_background)
-    lbl = torch.from_numpy(lbl_background).long()
-    print(lbl)
-# learn_astype()
-
-def test_label():
-    lbl = loadtiff3d('/Users/wonh/Desktop/flyJanelia/labels/12.tif')
-    lbl_background = (lbl == 0).astype('int')
-    lbl_foreground = (lbl != 0).astype('int')
-    lbl = np.stack([lbl_foreground, lbl_background], axis=3)
-    print(lbl.shape)
-    # print('lbl foreground sum: {} background sum: {}'.format(np.sum(lbl_background), np.sum(lbl_foreground)))
-    # lbl = torch.from_numpy(lbl).long()
-
-# test_label()
-
-def test_matrix_add():
-    a = np.asarray([1,2,3])
-    a = a + 1
-    print(a)
-# test_matrix_add()
-
-def test_zoom():
-    a = np.ones(shape=(3,3,3))
-    a[2][2][2] = 99
-    print(a)
-    a = torch.from_numpy(a).long()
-    print(a.max())
-
-# test_zoom()
-
-def learn_makenp():
-    from tensorboardX.summary import make_np
-    scalar = [0.3]
-    print(scalar)
-    scalar = make_np(scalar)
-    print(scalar.squeeze().ndim) # scalar.squeeze().ndim == 0
-
-learn_makenp()
+    parser.add_argument(
+        "--img_path", nargs="?", type=str, default=None, help="Path of the input image"
+    )
+    parser.add_argument(
+        "--out_path",
+        nargs="?",
+        type=str,
+        default=None,
+        help="Path of the output segmap",
+    )
+    args = parser.parse_args()
+    test(args)
