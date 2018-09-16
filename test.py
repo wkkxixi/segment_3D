@@ -113,7 +113,9 @@ def tensor_array():
     a = np.ndarray([1,2,3])
     a = ToTensor()(a)
     print(a)
-    log('')
+    a.view(1,1,2,3)
+    print(a)
+    # log('')
 
 # tensor_array()
 
@@ -178,6 +180,24 @@ def learn_pjoin():
     root = '/Users/wonh/Desktop/flyJanelia'
     a = pjoin(root, 'images')
     print(a)
-learn_pjoin()
+# learn_pjoin()
 
+def learn_view():
+    a = np.ndarray([3,3])
+    # print(a.shape)
+    a = ToTensor()(a)
+    print(a)
+    # a.view(1,3,3)
+    # print(a)
+
+# learn_view()
+
+def learn_stack():
+    a = np.ones(shape=(3,3,3))
+    # print(a)
+    b = np.ones(shape=(3, 3, 3))*99
+    # a = np.stack([a], axis=3)
+    a = np.stack([a,b], axis=0)
+    print(a[1,:,:])
+learn_stack()
 

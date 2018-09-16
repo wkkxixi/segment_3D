@@ -1,3 +1,4 @@
 .idea
 *.pyc
 ptsemseg/models/__pycache__/*
+runs/*

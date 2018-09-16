@@ -26,6 +26,7 @@ def loadtiff3d(filepath):
     for sample in a:
         stack.append(np.rot90(np.fliplr(np.flipud(sample))))
     out = np.dstack(stack)
+
     #a.close()
 
     return out

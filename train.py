@@ -176,6 +176,7 @@ def train(cfg, writer, logger):
             images = images.to(device)
             labels = labels.to(device)
 
+
             optimizer.zero_grad()
             outputs = model(images)
             log('TrainIter=> images.size():{} labels.size():{} | outputs.size():{}'.format(images.size(), labels.size(), outputs.size()))

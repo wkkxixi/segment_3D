@@ -1,4 +1,4 @@
-DEBUG=False
+DEBUG=True
 def log(s):
     if DEBUG:
         print(s)
@@ -92,8 +92,16 @@ class flyJaneliaLoader(data.Dataset):
 
         img = img[x:x + 160, y:y + 160, z:z + 8]
         lbl = lbl[x:x + 160, y:y + 160, z:z + 8]
-        img = self.tf(img)
-        lbl = self.tf(lbl)
+
+
+        # img = self.tf(img)
+        # lbl = self.tf(lbl)
+
+        img = np.stack([img], axis=0)
+        # lbl = np.stack([lbl])
+        # img = img.transpose(3, 0, 1, 2)
+        img = torch.from_numpy(img).float()
+        lbl = torch.from_numpy(lbl).long()
 
         return img, lbl
 
