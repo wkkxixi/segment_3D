@@ -1,5 +1,8 @@
 # segment_3D
 
+### Paper
+[Deep learning segmentation of optical microscopy images improves 3D neuron reconstruction](https://drive.google.com/open?id=1jWykhjOMP_WqxO5i4IBBEHorPztfCqfv)
+
 ### 1. Setup the dependencies (MAC & Ubuntu)
 To run ..., you need to install the following packages manually beforehand
 
