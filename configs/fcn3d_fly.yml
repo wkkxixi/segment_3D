@@ -8,8 +8,8 @@ data:
     img_cols: 'same'
     path: '/Users/wonh/Desktop/flyJanelia/'
 training:
-    train_iters: 2
-    batch_size: 2
+    train_iters: 10
+    batch_size: 1
     patch_size:
         x: 160
         y: 160
@@ -23,7 +23,7 @@ training:
 #      aug1: 'par1'
 #      aug2: 'par2'
     optimizer:
-        name: 'sgd'
+        name: 'adam'
         lr: 1.0e-3
         weight_decay: 0.0005
         momentum: 0.9

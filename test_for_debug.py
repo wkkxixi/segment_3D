@@ -38,7 +38,7 @@ from PIL import Image, ImageOps
 
 from PIL import Image
 from torchvision.transforms import ToTensor
-from utils.io import *
+from utils.imgReadWrite import *
 import numpy as np
 from scipy.ndimage.interpolation import zoom
 from os.path import join as pjoin
@@ -244,4 +244,40 @@ def learn_makenp():
     scalar = make_np(scalar)
     print(scalar.squeeze().ndim) # scalar.squeeze().ndim == 0
 
-learn_makenp()
+# learn_makenp()
+
+def test_scope():
+    for x in range(0,5,2):
+        print('loop x: {}'.format(x))
+    print(x)
+
+# test_scope()
+
+def test_max_along_axis():
+    a = np.asarray([[1,2,3,],[4,5,6]])
+    b = np.asarray([[3,2,1],[6,5,4]])
+    c = np.stack((a, b), axis=0)
+    print(c.shape)
+    f = (c[0]>=c[1]).astype('int')
+    print(f)
+    # c = np.stack((a,b), axis=0)
+    # print(c)
+    # print(c.max(0))
+# test_max_along_axis()
+
+def test_indices():
+    a = np.asarray([[1,2,3], [4,5,6]])
+    print(a[:,2:])
+# test_indices()
+
+def test_range_loop():
+    a = 0
+    while a < 7:
+        print(a)
+        if (7-a)%6 != 0:
+            print('!=0')
+            a = 1
+            continue
+        a += 6
+
+test_range_loop()

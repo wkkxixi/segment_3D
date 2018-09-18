@@ -1,5 +1,5 @@
 import time
-from utils.io import *
+from utils.imgReadWrite import *
 
 
 goldenfolderpath = '/home/heng/Gold166-JSON-meit/'

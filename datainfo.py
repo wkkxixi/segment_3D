@@ -1,4 +1,4 @@
-from utils.io import *
+from utils.imgReadWrite import *
 # from swcToTiff import *
 import os
 
