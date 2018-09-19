@@ -1,4 +1,4 @@
-DEBUG=False
+DEBUG=True
 def log(s):
     if DEBUG:
         print(s)
@@ -31,7 +31,14 @@ def prep_class_val_weights(ratio):
     display("Cross Entropy's Weight:{}".format(weight_foreback))
     return weight_foreback
 
-
+def time_keeper():
+    end = time.time()
+    elapsed = end - start
+    hour = int(elapsed / 3600)
+    left = elapsed % 3600
+    minute = int(left / 60)
+    seconds = left % 60
+    logger.info('The total time is: {} h {} m {} s'.format(hour, minute, seconds))
 
 import os
 # import sys
@@ -277,6 +284,7 @@ def train(cfg, writer, logger):
 
 
 if __name__ == "__main__":
+    start = time.time()
     parser = argparse.ArgumentParser(description="config")
     parser.add_argument(
         "--config",
@@ -302,3 +310,9 @@ if __name__ == "__main__":
     logger.info('Let the games begin')
 
     train(cfg, writer, logger)
+
+    time_keeper()
+
+
+start = None
+end = None

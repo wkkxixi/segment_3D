@@ -280,4 +280,20 @@ def test_range_loop():
             continue
         a += 6
 
-test_range_loop()
+# test_range_loop()
+
+def test_time():
+    import time
+    start = time.time()
+    # for i in range(10000):
+    #     a = 3
+    time.sleep(3663)
+    end = time.time()
+    elapsed = end - start
+    print(elapsed)
+    hour = int(elapsed / 3600)
+    left = elapsed % 3600
+    minute = int(left / 60)
+    seconds = left % 60
+    print('The total time is: {} h {} m {} s'.format(hour, minute, seconds))
+test_time()
