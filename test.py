@@ -47,7 +47,7 @@ def decoder(tensor):
     # log('tensor before to pred img: {}'.format(tensor.size()))
     pred = tensor.data.cpu().numpy()
     # log('pred img after to img: {}'.format(pred.shape))
-    ret = (pred[0][0]>=pred[0][1]).astype('int')
+    ret = (pred[0][0]<pred[0][1]).astype('int')
     # log('final return label map: {}'.format(ret.shape))
     return ret
 
