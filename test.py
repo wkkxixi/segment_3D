@@ -3,22 +3,12 @@ def log(s):
     if DEBUG:
         print(s)
 
-import sys, os
+
 import torch
 # import visdom
 import argparse
-import timeit
-import numpy as np
-import scipy.misc as misc
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.models as models
-
-from torch.utils import data
-from tqdm import tqdm
 
 from ptsemseg.models import get_model
-from ptsemseg.loader import get_loader, get_data_path
 from scipy.ndimage.interpolation import zoom
 
 from ptsemseg.utils import *
@@ -94,8 +84,25 @@ def test(args):
     y = 0
     z = 0
     while x < shapeX:
+        # residual
+        if x+160 > shapeX:
+            overlapX = x - (shapeX - 160)
+            x= shapeX - 160
+            log('overlapX: {}'.format(overlapX))
+        y = 0
         while y < shapeY:
+            # residual
+            if y + 160 > shapeY:
+                overlapY = y - (shapeY - 160)
+                y = shapeY - 160
+                log('overlapY: {}'.format(overlapY))
+            z = 0
             while z < shapeZ:
+                # residual check
+                if z+8 > shapeZ:
+                    overlapZ = z - (shapeZ - 8)
+                    z = shapeZ - 8
+                    log('overlapZ: {}'.format(overlapZ))
                 patch = img[x:x+160, y:y+160, z:z+8]
                 patch = imgToTensor(patch, device)
                 pred = model(patch)
@@ -110,12 +117,7 @@ def test(args):
                     else:
                         stack_alongZ = np.concatenate((stack_alongZ, pred), axis=2)
                 log('===>z ({}/{}) loop: stack_alongZ shape: {}'.format(z, shapeZ, stack_alongZ.shape))
-                # residual
-                if z+8 >= shapeZ:
-                    overlapZ = 8 - (shapeZ - z - 8)
-                    z = shapeZ - 8
-                    log('overlapZ: {}'.format(overlapZ))
-                    continue
+
                 z += 8
 
             if overlapY:
@@ -129,12 +131,7 @@ def test(args):
                     stack_alongY = np.concatenate((stack_alongY, stack_alongZ), axis=1)
             log('==>y ({}/{}) loop: stack_alongY shape: {}'.format(y, shapeY, stack_alongY.shape))
             stack_alongZ = None
-            # residual
-            if y+160 >= shapeY:
-                overlapY = 160 - (shapeY - y - 160)
-                y = shapeY - 160
-                log('overlapY: {}'.format(overlapY))
-                continue
+
             y += 160
 
         if overlapX:
@@ -148,12 +145,7 @@ def test(args):
                 stack_alongX = np.concatenate((stack_alongX, stack_alongY), axis=0)
         log('=>x ({}/{}) loop: stack_alongX shape: {}'.format(x, shapeX, stack_alongX.shape))
         stack_alongY = None
-        # residual
-        if x+160 >= shapeX:
-            overlapX = 160 - (shapeX - x - 160)
-            x= shapeX - 160
-            log('overlapX: {}'.format(overlapX))
-            continue
+
         x += 160
     log('save prediction in path: {}'.format(args.out_path))
     writetiff3d(args.out_path, stack_alongX*255)
@@ -167,7 +159,10 @@ if __name__ == "__main__":
         "--model_path",
         nargs="?",
         type=str,
-        default="/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl",
+        # default for mac
+        # default="/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl",
+        #default for ubuntu
+        default="/home/heng/Desktop/Research/isbi/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl",
         help="Path to the saved model",
     )
     parser.add_argument(
