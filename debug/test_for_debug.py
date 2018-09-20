@@ -38,7 +38,7 @@ from PIL import Image, ImageOps
 
 from PIL import Image
 from torchvision.transforms import ToTensor
-from utils.imgReadWrite import *
+from ptsemseg.utils import *
 import numpy as np
 from scipy.ndimage.interpolation import zoom
 from os.path import join as pjoin

@@ -11,7 +11,7 @@ import collections
 import os
 from os.path import join as pjoin
 from PIL import Image
-from utils.imgReadWrite import *
+from ptsemseg.utils import *
 from scipy.ndimage.interpolation import zoom
 from random import randint
 

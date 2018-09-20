@@ -35,3 +35,4 @@ training:
         max_iter: 2
     resume: fcn3d_fly_best_model.pkl # path to the model saved before
 #    resume: '/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl'
+#    resume: '/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/10912/fcn3dnet_flyJanelia_best_model.pkl'

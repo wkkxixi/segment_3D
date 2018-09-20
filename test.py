@@ -19,10 +19,9 @@ from tqdm import tqdm
 
 from ptsemseg.models import get_model
 from ptsemseg.loader import get_loader, get_data_path
-from ptsemseg.utils import convert_state_dict
 from scipy.ndimage.interpolation import zoom
 
-from utils.imgReadWrite import *
+from ptsemseg.utils import *
 
 # try:
 #     import pydensecrf.densecrf as dcrf
