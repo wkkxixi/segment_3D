@@ -4,3 +4,4 @@ ptsemseg/models/__pycache__/*
 runs/*
 flyJanelia/*
 *.pdf
+ptsemseg/__pycache__/*

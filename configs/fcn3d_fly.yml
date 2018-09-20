@@ -6,16 +6,17 @@ data:
     val_split: val
     img_rows: 'same'
     img_cols: 'same'
-    path: '/Users/wonh/Desktop/flyJanelia/'
+#    path: '/Users/wonh/Desktop/flyJanelia/' # for mac
+    path: '/home/heng/Desktop/Research/isbi/flyJanelia/' # for ubuntu
 training:
-    train_iters: 2
+    train_iters: 400
     batch_size: 2
     patch_size:
         x: 160
         y: 160
         z: 8
     cross_entropy_ratio: 0.003
-    val_interval: 1
+    val_interval: 10
     n_workers: 3
     print_interval: 1
     print_interval_per_batch: False
@@ -32,7 +33,7 @@ training:
         size_average: True
     lr_schedule:
         name: 'poly_lr'
-        max_iter: 2
+        max_iter: 400
     resume: fcn3d_fly_best_model.pkl # path to the model saved before
-#    resume: '/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl'
-#    resume: '/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/10912/fcn3dnet_flyJanelia_best_model.pkl'
+#    resume: '/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl' # for mac
+#    resume: '/home/heng/Desktop/Research/isbi/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl' # for ubuntu

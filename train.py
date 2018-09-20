@@ -312,7 +312,3 @@ if __name__ == "__main__":
     train(cfg, writer, logger)
 
     time_keeper()
-
-
-start = None
-end = None
