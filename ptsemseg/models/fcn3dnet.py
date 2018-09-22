@@ -1,25 +1,53 @@
 DEBUG=False
 def log(s):
     if DEBUG:
-        log(s)
+        print(s)
 
 import torch.nn as nn
 from ptsemseg.models.utils import *
+
+class block(nn.Module):
+    def __init__(self, conv_in_channels, out_channels, kernel_size, stride=1, padding=0):
+        super(block, self).__init__()
+
+        self.layer = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding),
+                                    # nn.BatchNorm3d(out_channels),
+                                    nn.ReLU(inplace=False))
+
+    def forward(self, x):
+        output = self.layer(x)
+        return output
+
 
 class stem(nn.Module):
     def __init__(self, conv_in_channels):
         super(stem, self).__init__()
 
-        self.layer1 = nn.Conv3d(in_channels=conv_in_channels, out_channels=32, kernel_size=(3,3,1), stride=2)
-        self.layer2 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(3,3,4))
+        self.layer1 = block(conv_in_channels, 32, (3,3,1), 2)
 
-        self.path1 = nn.Sequential(nn.Conv3d(in_channels=64, out_channels=64, kernel_size=1, stride=1, padding=0, bias=False),
-                                   nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1)))
+        self.layer2 = block(32, 64, (3,3,4))
 
-        self.path2 = nn.Sequential(nn.Conv3d(in_channels=64, out_channels=64, kernel_size=1),
-                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(1,7,1), padding=(1,2,0)),
-                                   nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(7,1,1), padding=(2,1,0)),
-                                   nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1)))
+        self.path1 = nn.Sequential(
+            block(64, 64, 1),
+            block(64, 96, (3,3,1))
+        )
+
+        self.path2 = nn.Sequential(block(64,64,1),
+                                   block(64,64,(1,7,1), 1, (1,2,0)),
+                                   block(64,64,(7,1,1), 1, (2,1,0)),
+                                   block(64,96,(3,3,1))
+                                   )
+
+        # self.layer1 = nn.Conv3d(in_channels=conv_in_channels, out_channels=32, kernel_size=(3,3,1), stride=2)
+        # self.layer2 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(3,3,4))
+        #
+        # self.path1 = nn.Sequential(nn.Conv3d(in_channels=64, out_channels=64, kernel_size=1, stride=1, padding=0, bias=False),
+        #                            nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1)))
+        #
+        # self.path2 = nn.Sequential(nn.Conv3d(in_channels=64, out_channels=64, kernel_size=1),
+        #                            nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(1,7,1), padding=(1,2,0)),
+        #                            nn.Conv3d(in_channels=64, out_channels=64, kernel_size=(7,1,1), padding=(2,1,0)),
+        #                            nn.Conv3d(in_channels=64, out_channels=96, kernel_size=(3,3,1)))
 
     def forward(self, x):
         log('stem - input: ' + str(x.size()))
@@ -41,17 +69,37 @@ class inceptionA(nn.Module):
         super(inceptionA, self).__init__()
 
         self.layer1 = nn.ReLU(inplace=False)
-        self.layer2_1 = nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=(3,3,1), stride=2)
-        self.layer2_2 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
-        self.layer3_1 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
-                                      nn.Conv3d(in_channels=32, out_channels=384, kernel_size=1))
-        self.layer3_2 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
-                                      nn.Conv3d(in_channels=32, out_channels=32, kernel_size=(3,3,1), padding=(1,1,0)),
-                                      nn.Conv3d(in_channels=32, out_channels=384, kernel_size=1))
-        self.layer3_3 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
-                                      nn.Conv3d(in_channels=32, out_channels=48, kernel_size=(3,3,1), padding=(1,1,0)),
-                                      nn.Conv3d(in_channels=48, out_channels=64, kernel_size=(3,3,1), padding=(1,1,0)),
-                                      nn.Conv3d(in_channels=64, out_channels=384, kernel_size=1))
+        self.layer2_1 = block(conv_in_channels, 192, (3,3,1), 2)
+
+        self.layer2_2 = nn.MaxPool3d(kernel_size=(3, 3, 1), stride=2)
+
+        self.layer3_1 = nn.Sequential(block(384, 32, 1),
+                                      block(32, 384, 1)
+                                      )
+
+
+        self.layer3_2 = nn.Sequential(block(384, 32, 1),
+                                      block(32, 32, (3, 3, 1), 1, (1, 1, 0)),
+                                      block(32, 384, 1))
+
+        self.layer3_3 = nn.Sequential(block(384, 32, 1),
+                                      block(32, 48, (3,3,1), 1, (1,1,0)),
+                                      block(48, 64, (3,3,1), 1, (1,1,0)),
+                                      block(64, 384, 1)
+                                      )
+
+        # self.layer1 = nn.ReLU(inplace=False)
+        # self.layer2_1 = nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=(3,3,1), stride=2)
+        # self.layer2_2 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
+        # self.layer3_1 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
+        #                               nn.Conv3d(in_channels=32, out_channels=384, kernel_size=1))
+        # self.layer3_2 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
+        #                               nn.Conv3d(in_channels=32, out_channels=32, kernel_size=(3,3,1), padding=(1,1,0)),
+        #                               nn.Conv3d(in_channels=32, out_channels=384, kernel_size=1))
+        # self.layer3_3 = nn.Sequential(nn.Conv3d(in_channels=384, out_channels=32, kernel_size=1),
+        #                               nn.Conv3d(in_channels=32, out_channels=48, kernel_size=(3,3,1), padding=(1,1,0)),
+        #                               nn.Conv3d(in_channels=48, out_channels=64, kernel_size=(3,3,1), padding=(1,1,0)),
+        #                               nn.Conv3d(in_channels=64, out_channels=384, kernel_size=1))
     def forward(self, x):
         log('inceptionA - input: ' + str(x.size()))
         relu = self.layer1(x)
@@ -84,11 +132,21 @@ class reductionA(nn.Module):
         super(reductionA, self).__init__()
 
         self.layer1 = nn.ReLU(inplace=False)
-        self.layer2_1 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
-        self.layer2_2 = nn.Conv3d(in_channels=conv_in_channels, out_channels=128, kernel_size=(3,3,1), stride=2) # 32->128
-        self.layer2_3 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=256, kernel_size=1, stride=1),
-                                      nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(3,3,1), stride=1),
-                                      nn.Conv3d(in_channels=256, out_channels=384, kernel_size=(3,3,1), stride=2, padding=(1,1,0)))
+        self.layer2_1 = nn.MaxPool3d(kernel_size=(3, 3, 1), stride=2)
+        self.layer2_2 = block(conv_in_channels, 128, (3,3,1), 2)
+
+        self.layer2_3 = nn.Sequential(
+            block(conv_in_channels, 256, 1, 1),
+            block(256, 256, (3, 3, 1), 1),
+            block(256, 384, (3, 3, 1), 2, (1, 1, 0))
+        )
+
+        # self.layer1 = nn.ReLU(inplace=False)
+        # self.layer2_1 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
+        # self.layer2_2 = nn.Conv3d(in_channels=conv_in_channels, out_channels=128, kernel_size=(3,3,1), stride=2) # 32->128
+        # self.layer2_3 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=256, kernel_size=1, stride=1),
+        #                               nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(3,3,1), stride=1),
+        #                               nn.Conv3d(in_channels=256, out_channels=384, kernel_size=(3,3,1), stride=2, padding=(1,1,0)))
 
 
 
@@ -113,12 +171,26 @@ class inceptionB(nn.Module):
         super(inceptionB, self).__init__()
 
         self.layer1 = nn.ReLU(inplace=False)
-        self.layer2_1 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=128, kernel_size=1),
-                                      nn.Conv3d(in_channels=128, out_channels=896, kernel_size=1))
-        self.layer2_2 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=128, kernel_size=1),
-                                      nn.Conv3d(in_channels=128, out_channels=128, kernel_size=(1,7,1), padding=(1,2,0)),
-                                      nn.Conv3d(in_channels=128, out_channels=128, kernel_size=(7,1,1), padding=(2,1,0)),
-                                      nn.Conv3d(in_channels=128, out_channels=896, kernel_size=1))
+
+
+        self.layer2_1 = nn.Sequential(
+                                      block(conv_in_channels, 128, 1),
+                                      block(128, 896, 1)
+                                      )
+        self.layer2_2 = nn.Sequential(
+                                        block(conv_in_channels, 128, 1),
+                                        block(128, 128, (1, 7, 1), 1, (1, 2, 0)),
+                                        block(128, 128, (7, 1, 1), 1, (2, 1, 0)),
+                                        block(128, 896, 1)
+                                      )
+
+        # self.layer1 = nn.ReLU(inplace=False)
+        # self.layer2_1 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=128, kernel_size=1),
+        #                               nn.Conv3d(in_channels=128, out_channels=896, kernel_size=1))
+        # self.layer2_2 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=128, kernel_size=1),
+        #                               nn.Conv3d(in_channels=128, out_channels=128, kernel_size=(1,7,1), padding=(1,2,0)),
+        #                               nn.Conv3d(in_channels=128, out_channels=128, kernel_size=(7,1,1), padding=(2,1,0)),
+        #                               nn.Conv3d(in_channels=128, out_channels=896, kernel_size=1))
     def forward(self, x):
         log('inceptionB - input: ' + str(x.size()))
         out = self.layer1(x)
@@ -141,13 +213,24 @@ class reductionB(nn.Module):
         super(reductionB, self).__init__()
 
         self.layer1 = nn.ReLU(inplace=False)
-        self.layer2_1 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=1),
-                                      nn.Conv3d(in_channels=192, out_channels=192, kernel_size=(3,3,1), stride=2))
-        self.layer2_2 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
-        self.layer2_3 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=256, kernel_size=1),
-                                      nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(1,7,1), padding=(1,2,0)),
-                                      nn.Conv3d(in_channels=256, out_channels=320, kernel_size=(7,1,1), padding=(2,1,0)),
-                                      nn.Conv3d(in_channels=320, out_channels=960, kernel_size=(3,3,1), stride=2))
+        self.layer2_1 = nn.Sequential(block(conv_in_channels, 192, 1),
+                                      block(192, 192, (3, 3, 1), 2)
+                                      )
+        self.layer2_2 = nn.MaxPool3d(kernel_size=(3, 3, 1), stride=2)
+        self.layer2_3 = nn.Sequential(block(conv_in_channels, 256, 1),
+                                      block(256, 256, (1, 7, 1), 1, (1, 2, 0)),
+                                      block(256, 320, (7,1,1), 1, (2, 1, 0)),
+                                      block(320, 960, (3, 3, 1), 2)
+                                      )
+
+        # self.layer1 = nn.ReLU(inplace=False)
+        # self.layer2_1 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=1),
+        #                               nn.Conv3d(in_channels=192, out_channels=192, kernel_size=(3,3,1), stride=2))
+        # self.layer2_2 = nn.MaxPool3d(kernel_size=(3,3,1), stride=2)
+        # self.layer2_3 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=256, kernel_size=1),
+        #                               nn.Conv3d(in_channels=256, out_channels=256, kernel_size=(1,7,1), padding=(1,2,0)),
+        #                               nn.Conv3d(in_channels=256, out_channels=320, kernel_size=(7,1,1), padding=(2,1,0)),
+        #                               nn.Conv3d(in_channels=320, out_channels=960, kernel_size=(3,3,1), stride=2))
 
     def forward(self, x):
         log('reductionB - input: ' + str(x.size()))
@@ -172,12 +255,20 @@ class inceptionC(nn.Module):
         super(inceptionC, self).__init__()
 
         self.layer1 = nn.ReLU(inplace=False)
-        self.layer2_1 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=1),
-                                      nn.Conv3d(in_channels=192, out_channels=2048, kernel_size=1))
-        self.layer2_2 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=1),
-                                      nn.Conv3d(in_channels=192, out_channels=224, kernel_size=(1,3,1), padding=(0,1,0)),
-                                      nn.Conv3d(in_channels=224, out_channels=256, kernel_size=(3,1,1), padding=(1,0,0)),
-                                      nn.Conv3d(in_channels=256, out_channels=2048, kernel_size=1))
+        self.layer2_1 = nn.Sequential(block(conv_in_channels, 192, 1),
+                                      block(192, 2048, 1))
+        self.layer2_2 = nn.Sequential(block(conv_in_channels, 192, 1),
+                                      block(192, 224, (1, 3, 1), 1, (0, 1, 0)),
+                                      block(224, 256, (3, 1, 1), 1, (1, 0, 0)),
+                                      block(256, 2048, 1))
+
+        # self.layer1 = nn.ReLU(inplace=False)
+        # self.layer2_1 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=1),
+        #                               nn.Conv3d(in_channels=192, out_channels=2048, kernel_size=1))
+        # self.layer2_2 = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=192, kernel_size=1),
+        #                               nn.Conv3d(in_channels=192, out_channels=224, kernel_size=(1,3,1), padding=(0,1,0)),
+        #                               nn.Conv3d(in_channels=224, out_channels=256, kernel_size=(3,1,1), padding=(1,0,0)),
+        #                               nn.Conv3d(in_channels=256, out_channels=2048, kernel_size=1))
 
     def forward(self, x):
         log('inceptionC - input: ' + str(x.size()))

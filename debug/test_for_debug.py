@@ -296,4 +296,15 @@ def test_time():
     minute = int(left / 60)
     seconds = left % 60
     print('The total time is: {} h {} m {} s'.format(hour, minute, seconds))
-test_time()
+# test_time()
+
+def learn_tensor():
+    import torch
+    a = np.zeros(shape=(2,2,2))
+    a = torch.from_numpy(a)
+    b = np.ones(shape=(2,2,2))
+    b = torch.from_numpy(b)
+    c = a+b
+    c = c/2
+    print(c)
+learn_tensor()

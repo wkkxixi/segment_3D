@@ -9,7 +9,7 @@ data:
 #    path: '/Users/wonh/Desktop/flyJanelia/' # for mac
     path: '/home/heng/Desktop/Research/isbi/flyJanelia/' # for ubuntu
 training:
-    train_iters: 400
+    train_iters: 60
     batch_size: 2
     patch_size:
         x: 160
@@ -32,8 +32,8 @@ training:
         name: 'cross_entropy3d'
         size_average: True
     lr_schedule:
-        name: 'poly_lr'
-        max_iter: 400
+        #name: 'poly_lr'
+        #max_iter: 400
     resume: fcn3d_fly_best_model.pkl # path to the model saved before
 #    resume: '/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl' # for mac
 #    resume: '/home/heng/Desktop/Research/isbi/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl' # for ubuntu

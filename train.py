@@ -1,4 +1,4 @@
-DEBUG=True
+DEBUG=False
 def log(s):
     if DEBUG:
         print(s)
@@ -184,6 +184,8 @@ def train(cfg, writer, logger):
             model.train()
             images = images.to(device)
             labels = labels.to(device)
+
+            mean = images[0]
 
 
             optimizer.zero_grad()
