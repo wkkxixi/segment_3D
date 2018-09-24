@@ -1,4 +1,4 @@
-DEBUG=True
+DEBUG=False
 def log(s):
     if DEBUG:
         print(s)
@@ -53,6 +53,9 @@ def test(args):
     # Setup image
     print("Read Input Image from : {}".format(args.img_path))
     img = loadtiff3d(args.img_path)
+    oldeShapeX = img.shape[0]
+    oldeShapeY = img.shape[1]
+    oldeShapeZ = img.shape[2]
     log('img before zoom has shape: {}'.format(img.shape))
     ratioX = max(img.shape[0], 160) / img.shape[0]
     ratioY = max(img.shape[1], 160) / img.shape[1]
@@ -148,8 +151,15 @@ def test(args):
 
         x += 160
     log('save prediction in path: {}'.format(args.out_path))
+    ratioX = oldeShapeX / stack_alongX.shape[0]
+    ratioY = oldeShapeY / stack_alongX.shape[1]
+    ratioZ = oldeShapeZ / stack_alongX.shape[2]
+    stack_alongX = zoom(stack_alongX, (ratioX, ratioY, ratioZ))
+    if stack_alongX.shape[0] != oldeShapeX or stack_alongX.shape[1] != oldeShapeY or stack_alongX.shape[2] != oldeShapeZ:
+        print("Read Input Image from : {}".format(args.img_path))
+        print('result shape is: {} but aimed shape is {}'.format(stack_alongX.shape,(oldeShapeX, oldeShapeY, oldeShapeZ)))
+        exit(1)
     writetiff3d(args.out_path, stack_alongX*255)
-
 
 
 

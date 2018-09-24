@@ -307,4 +307,11 @@ def learn_tensor():
     c = a+b
     c = c/2
     print(c)
-learn_tensor()
+# learn_tensor()
+
+def learn_exit():
+    print('start')
+    exit(1)
+    print('end')
+
+learn_exit()

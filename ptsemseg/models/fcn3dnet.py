@@ -11,7 +11,7 @@ class block(nn.Module):
         super(block, self).__init__()
 
         self.layer = nn.Sequential(nn.Conv3d(in_channels=conv_in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding),
-                                    # nn.BatchNorm3d(out_channels),
+                                    nn.BatchNorm3d(out_channels),
                                     nn.ReLU(inplace=False))
 
     def forward(self, x):

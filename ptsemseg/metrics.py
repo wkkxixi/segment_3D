@@ -26,7 +26,7 @@ class runningScore(object):
         log('metrics=>update(): len(label_preds): {}'.format(len(label_preds)))
         for data_idx in range(label_preds.shape[0]):
             label_pred, label_true = label_preds[data_idx], label_trues[data_idx]
-            dice = np.sum(label_pred[label_true == 1]) * 2.0 / (np.sum(label_pred) + np.sum(label_true))
+            dice = np.sum(label_pred[label_true == 1]) * 2.0 / (np.sum(label_pred) + np.sum(label_true)) # f1 score
             self.patch_dice_list.append(dice)
         for lt, lp in zip(label_trues, label_preds):
             self.confusion_matrix += self._fast_hist(
