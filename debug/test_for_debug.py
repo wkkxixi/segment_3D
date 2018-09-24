@@ -307,4 +307,18 @@ def learn_tensor():
     c = a+b
     c = c/2
     print(c)
-learn_tensor()
+# learn_tensor()
+
+def learn_operator():
+    a = 99
+    print(a//2)
+    print(a/2)
+# learn_operator()
+
+def learn_pad():
+    import torch.nn.functional as F
+    t3d = torch.empty(3, 3, 1)
+    print(t3d)
+    out = F.pad(t3d, [1,1], "constant", 0)
+    print(out)
+learn_pad()

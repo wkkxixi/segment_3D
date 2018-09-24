@@ -1,3 +1,8 @@
+DEBUG = True
+def log(s):
+    if DEBUG:
+        print(s)
+
 import torch
 import torch.nn as nn
 import numpy as np
@@ -169,6 +174,32 @@ class unetConv2(nn.Module):
         outputs = self.conv2(outputs)
         return outputs
 
+class unetConv2_3d(nn.Module):
+    def __init__(self, in_size, out_size, is_batchnorm):
+        super(unetConv2_3d, self).__init__()
+
+        if is_batchnorm:
+            self.conv1 = nn.Sequential(
+                nn.Conv3d(in_size, out_size, 3, 1, 1),
+                nn.BatchNorm3d(out_size),
+                nn.ReLU(),
+            )
+            self.conv2 = nn.Sequential(
+                nn.Conv3d(out_size, out_size, 3, 1, 1),
+                nn.BatchNorm3d(out_size),
+                nn.ReLU(),
+            )
+        else:
+            self.conv1 = nn.Sequential(nn.Conv3d(in_size, out_size, 3, 1, 1), nn.ReLU())
+            self.conv2 = nn.Sequential(
+                nn.Conv3d(out_size, out_size, 3, 1, 1), nn.ReLU()
+            )
+
+    def forward(self, inputs):
+        outputs = self.conv1(inputs)
+        outputs = self.conv2(outputs)
+        return outputs
+
 
 class unetUp(nn.Module):
     def __init__(self, in_size, out_size, is_deconv):
@@ -181,10 +212,56 @@ class unetUp(nn.Module):
 
     def forward(self, inputs1, inputs2):
         outputs2 = self.up(inputs2)
-        offset = outputs2.size()[2] - inputs1.size()[2]
-        padding = 2 * [offset // 2, offset // 2]
+        # offset = outputs2.size()[2] - inputs1.size()[2]
+        # padding = 2 * [offset // 2, offset // 2]
+        # outputs1 = F.pad(inputs1, padding)
+        # return self.conv(torch.cat([outputs1, outputs2], 1))
+
+        # log('unetUp2d: inputs1 size {}, inputs2 size {}'.format(inputs1.size(), inputs2.size()))
+        # outputs2 = self.up(inputs2)
+        # log('unetUp2d: upsample inputs2, get outputs2 size {}'.format(outputs2.size()))
+        # offset =  outputs2.size()[2] - inputs1.size()[2]
+        # log('unetUp2d: offset between outputs2 and inputs1 is: {}'.format(offset))
+        # padding =  2 * [offset // 2, offset - offset // 2]
+        # log('unetUp2d: padding is: {}'.format(padding))
+        # outputs1 = F.pad(inputs1, padding)
+        # log('unetUp2d: after padding inputs1, we get outputs1 size {}'.format(outputs1.size()))
+        outputs1 = inputs1
+        output = torch.cat([outputs1, outputs2], 1)
+        log('unetUp2d: after cat outputs1 and outputs2: {}'.format(output.size()))
+
+        output = self.conv(output)
+        log('unetUp2d: after conv: {}'.format(output.size()))
+        return output
+
+class unetUp3d(nn.Module):
+    def __init__(self, in_size, out_size, is_deconv):
+        super(unetUp3d, self).__init__()
+        self.conv = unetConv2_3d(in_size, out_size, False)
+        if is_deconv:
+            self.up = nn.ConvTranspose3d(in_size, out_size, kernel_size=2, stride=2)
+        else:
+            self.up = F.interpolate(scale_factor=2, mode='bilinear')
+
+    def forward(self, inputs1, inputs2):
+        log('unetUp3d: inputs1 size {}, inputs2 size {}'.format(inputs1.size(), inputs2.size()))
+        outputs2 = self.up(inputs2)
+        log('unetUp3d: upsample inputs2, get outputs2 size {}'.format(outputs2.size()))
+        offset1 = outputs2.size()[2] - inputs1.size()[2]
+        offset2 = outputs2.size()[3] - inputs1.size()[3]
+        offset3 = outputs2.size()[4] - inputs1.size()[4]
+        log('unetUp3d: offset between outputs2 and inputs1 is: {}'.format((offset1, offset2, offset3)))
+        padding = [offset3 // 2, offset3 - offset3 // 2, offset2//2, offset2-offset2//2, offset1//2, offset1-offset1//2]
+        log('unetUp3d: padding is: {}'.format(padding))
         outputs1 = F.pad(inputs1, padding)
-        return self.conv(torch.cat([outputs1, outputs2], 1))
+        log('unetUp3d: after padding inputs1, we get outputs1 size {}'.format(outputs1.size()))
+
+        output = torch.cat([outputs1, outputs2], 1)
+        log('unetUp3d: after cat outputs1 and outputs2: {}'.format(output.size()))
+
+        output = self.conv(output)
+        log('unetUp3d: after conv: {}'.format(output.size()))
+        return output
 
 
 class segnetDown2(nn.Module):
