@@ -12,6 +12,7 @@ import torchvision.models as models
 # from ptsemseg.models.linknet3d import *
 # from ptsemseg.models.frrn import *
 from ptsemseg.models.fcn3dnet import *
+from ptsemseg.models.unet3d import *
 
 
 def get_model(model_dict, n_classes, version=None):
@@ -72,7 +73,9 @@ def _get_model_instance(name):
             # "linknet3d":linknet3d,
             # "frrnA": frrn,
             # "frrnB": frrn,
-            "fcn3dnet" : fcn3dnet
+            "fcn3dnet" : fcn3dnet,
+            "unet3d": unet3d
+
         }[name]
     except:
         raise("Model {} not available".format(name))
