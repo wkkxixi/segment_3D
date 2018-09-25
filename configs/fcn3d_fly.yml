@@ -1,5 +1,6 @@
 model:
-    arch: unet3d
+#    arch: unet3d
+    arch: fcn3dnet
 data:
     dataset: flyJanelia
     train_split: train
@@ -9,7 +10,7 @@ data:
 #    path: '/Users/wonh/Desktop/flyJanelia/' # for mac
     path: '/home/heng/Desktop/Research/isbi/flyJanelia/' # for ubuntu
 training:
-    train_iters: 200
+    train_iters: 60
     batch_size: 2
     patch_size:
         x: 160

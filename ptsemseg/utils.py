@@ -92,7 +92,8 @@ def swc2tif(filepath, tif_filepath, output_path):
         x = swc[row][2]
         y = swc[row][3]
         z = swc[row][4]
-        r = swc[row][-2]
+        # r = swc[row][-2]
+        r = 1  # all radius set to 1
         p = swc[row][-1]
         output[int(max(0, x-r)):int(min(x_shape, x+r)), int(max(0, y-r)):int(min(y_shape, y+r)), int(max(0, z-r)):int(min(z_shape, z+r))] = 255
     writetiff3d(output_path, output)
@@ -101,7 +102,8 @@ def swc2tif(filepath, tif_filepath, output_path):
 Reconstruction for all swc file in the specified folder
 '''
 def swc2tif_operation(folder):
-    label_folder = folder + '/labels'
+    # label_folder = folder + '/labels'
+    label_folder = folder + '/labels_v2' # with all radius to 1
     if not os.path.isdir(os.path.join(os.getcwd(), label_folder)):
         os.mkdir(label_folder)
     else:

@@ -315,7 +315,7 @@ def learn_exit():
     exit(1)
     print('end')
 
-learn_exit()
+# learn_exit()
 
 def learn_operator():
     a = 99
@@ -329,5 +329,43 @@ def learn_pad():
     print(t3d)
     out = F.pad(t3d, [1,1], "constant", 0)
     print(out)
-learn_pad()
+# learn_pad()
 
+def learn_raise_exception():
+    if 1 == 1:
+        raise Exception('THe image...')
+    print('should not print this line')
+
+# learn_raise_exception()
+
+def learn_flatten():
+    a = np.zeros(shape=(3,3,3))
+    a = a.flatten()
+    print(a)
+# learn_flatten()
+
+def learn_histogram2d():
+    import matplotlib.pyplot as plt
+    xedges = [0, 1, 3, 5]
+    yedges = [0, 2, 3, 4, 6]
+    # x = np.random.normal(2, 1, 100) # mean, dev, size
+    # y = np.random.normal(1, 1, 100)
+    x = np.asarray([0,2,3,4,5])
+    y = np.asarray([0,2,3,4,5])
+    H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges))
+    print(H)
+    H = H.T
+    print(H)
+    print(H.shape, xedges.shape, yedges.shape)
+    fig = plt.figure(figsize=(7, 3))
+    ax = fig.add_subplot(132, title='pcolormesh: actual edges',aspect='equal')
+    X, Y = np.meshgrid(xedges, yedges)
+    ax.pcolormesh(X, Y, H)
+    plt.show()
+# learn_histogram2d()
+
+def swc_to_tiff():
+    from ptsemseg.utils import swc2tif_operation
+    folder = '/home/heng/Desktop/Research/isbi/flyJanelia'
+    swc2tif_operation(folder)
+# swc_to_tiff()
