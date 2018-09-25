@@ -9,6 +9,7 @@ import numpy as np
 
 from collections import OrderedDict
 from skimage.draw import line_aa
+import skfmm
 
 
 def loadswc(filepath):
@@ -100,10 +101,13 @@ def swc2tif(filepath, tif_filepath, output_path):
 
 '''
 Reconstruction for all swc file in the specified folder
+mode: 
+    0 - swc2tif
+    1 - swc2tif_dt
+
 '''
-def swc2tif_operation(folder):
-    # label_folder = folder + '/labels'
-    label_folder = folder + '/labels_v2' # with all radius to 1
+def swc2tif_operation(folder, label_folder_name, mode = 0):
+    label_folder = folder + '/' + label_folder_name
     if not os.path.isdir(os.path.join(os.getcwd(), label_folder)):
         os.mkdir(label_folder)
     else:
@@ -117,7 +121,71 @@ def swc2tif_operation(folder):
         file_path = folder + '/ground_truth/' + filename + '.swc'
         converted_path = label_folder + '/' + filename + '.tif'
         tif_path = folder + '/images/' + filename + '.tif'
-        swc2tif(file_path, tif_path, converted_path)
+        if mode == 1:
+            swc2tif_dt(file_path, tif_path, converted_path)
+        else:
+            swc2tif(file_path, tif_path, converted_path)
+
+'''
+Regenerate tif file from swc and also apply distance transform.
+'''
+def swc2tif_dt(swc_path, tif_path, output_path):
+    import math
+    swc = loadswc(swc_path)
+    img = loadtiff3d(tif_path)
+    shape = img.shape
+    skimg = np.ones(shape)
+    zeromask = np.ones(shape)
+
+    # Add nodes the current swc to make sure there is
+    # at least one node in each voxel on a branch
+    idlist = swc[:, 0]
+    extra_nodes = []
+    extra_nodes_radius = []
+    for i in range(swc.shape[0]):
+        cnode = swc[i, 2:5]
+        c_radius = swc[i, -2]
+        pnode = swc[idlist == swc[i, 6], 2:5]
+        if pnode.shape[0] != 0:
+            p_radius = swc[idlist == swc[i, 6], -2][0]
+            average_radius = int(c_radius+p_radius)/2
+
+        dvec = pnode - cnode # [[x, y, z]]
+        dvox = np.floor(np.linalg.norm(dvec)) # eculidean norm
+        if dvox >= 1:
+            uvec = dvec / (dvox + 1) # unit vector
+            extra_nodes.extend(
+                [cnode + uvec * i for i in range(1, int(dvox))])
+            extra_nodes_radius.extend([average_radius for i in range(1, int(dvox))])
+
+    # Deal with nodes in swc
+    for i in range(swc.shape[0]):
+        node = [math.floor(n) for n in swc[i, 2:5]]
+        r = int(swc[i, -2])
+        skimg[node[0], node[1], node[2]] = 0
+        zeromask[node[0]-r: node[0]+r, node[1]-r:node[1]+r, node[2]-r:node[2]+r] = 0
+
+    # Deal with the extra nodes
+    ex_count = 0
+    for ex in extra_nodes:
+        node = [math.floor(n) for n in ex[0]] # get integer x, y, z
+        skimg[node[0], node[1], node[2]] = 0
+        r = int(extra_nodes_radius[ex_count])
+        zeromask[node[0] - r: node[0] + r, node[1] - r:node[1] + r, node[2] - r:node[2] + r] = 0
+        ex_count += 1
+
+    a, dm = 6, 5
+    dt = skfmm.distance(skimg, dx=1)
+
+    dt = np.exp(a * (1 - dt / dm)) - 1
+    dt[zeromask == 1] = 0
+    dt = (dt/np.max(dt))*255
+
+    writetiff3d(output_path, dt)
+
+
+
+
 
 
 # filepath - the absolute path to the tif file

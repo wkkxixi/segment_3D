@@ -369,3 +369,38 @@ def swc_to_tiff():
     folder = '/home/heng/Desktop/Research/isbi/flyJanelia'
     swc2tif_operation(folder)
 # swc_to_tiff()
+
+def test_extend():
+    a = []
+    a.extend([1,2,3])
+    print(a)
+    a.extend([i for i in range(4,7)])
+    print(a)
+
+# test_extend()
+
+def test_array():
+    a = np.ones(shape=(3,3,3))
+    print(a[0][0][0])
+    print(a[0,0,0])
+# test_array()
+
+def test_skfmm():
+    import skfmm
+    import numpy as np
+    phi = np.ones((3, 3))
+    phi[1, 1] = -1
+    print(skfmm.distance(phi))
+# test_skfmm()
+
+
+# def test_dt():
+#     from ptsemseg.utils import make_from_swc
+#     make_from_swc()
+# test_dt()
+from ptsemseg.utils import *
+def test_dt():
+    folder = '/Users/wonh/Desktop/flyJanelia-'
+    label_folder_name = 'labels_dt'
+    swc2tif_operation(folder, label_folder_name, mode=1)
+test_dt()
