@@ -27,7 +27,7 @@ class RandomHorizontallyFlip3d(object):
     def __call__(self, img, mask):
         if random.random() < self.p:
             return (
-                np.fliplr(img), np.fliplf(mask)
+                np.fliplr(img), np.fliplr(mask)
             )
         return img, mask
 
@@ -50,7 +50,7 @@ class RandomFlipInsideOut3d(object):
     def __call__(self, img, mask):
         if random.random() < self.p:
             return (
-                (np.flip(img, axis=2)).copy(), (np.flip(mask, axis=3)).copy()
+                (np.flip(img, axis=2)).copy(), (np.flip(mask, axis=2)).copy()
             )
         return img, mask
 

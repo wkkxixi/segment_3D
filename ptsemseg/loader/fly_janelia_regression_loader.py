@@ -1,4 +1,4 @@
-DEBUG=False
+DEBUG=True
 def log(s):
     if DEBUG:
         print(s)
@@ -42,6 +42,8 @@ class flyJaneliaRegLoader(data.Dataset):
         #                                                    [0.229, 0.224, 0.225])])
         self.tf = transforms.ToTensor()
 
+        self.shape = None
+
 
     def __len__(self):
         return len(self.nameList)
@@ -50,14 +52,17 @@ class flyJaneliaRegLoader(data.Dataset):
         im_name = self.nameList[index]
         im_path = pjoin(self.root, 'images', im_name + '.tif')
         lbl_path = pjoin(self.root, 'labels_v3', im_name + '.tif')
-        # log('=========>  {}'.format(im_path))
+        log('=========>  {}'.format(im_path))
         img = loadtiff3d(im_path)
         lbl = loadtiff3d(lbl_path)
-
-        img, lbl = self.find_patch(index, img, lbl)
+        self.shape = img.shape
 
         if self.augmentations is not None:
             img, lbl = self.augmentations(img, lbl)
+
+        img, lbl = self.find_patch(index, img, lbl)
+
+
 
         img, lbl = self.transform(img, lbl)
 
