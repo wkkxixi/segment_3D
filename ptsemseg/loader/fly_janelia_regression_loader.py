@@ -104,7 +104,8 @@ class flyJaneliaRegLoader(data.Dataset):
         # lbl = self.tf(lbl)
 
         img = np.stack([img], axis=0)
-        # lbl = (lbl > 0).astype('int')
+        #lbl = (lbl > 0).astype('int')
+        lbl = np.stack([lbl], axis=0)
         img = torch.from_numpy(img).float()
         # lbl = torch.from_numpy(lbl).long()
         lbl = torch.from_numpy(lbl).float()
