@@ -49,7 +49,7 @@ class flyJaneliaRegLoader(data.Dataset):
     def __getitem__(self, index):
         im_name = self.nameList[index]
         im_path = pjoin(self.root, 'images', im_name + '.tif')
-        lbl_path = pjoin(self.root, 'labels', im_name + '.tif')
+        lbl_path = pjoin(self.root, 'labels_v3', im_name + '.tif')
         # log('=========>  {}'.format(im_path))
         im = loadtiff3d(im_path)
         lbl = loadtiff3d(lbl_path)
@@ -106,7 +106,9 @@ class flyJaneliaRegLoader(data.Dataset):
         img = np.stack([img], axis=0)
         # lbl = (lbl > 0).astype('int')
         img = torch.from_numpy(img).float()
-        lbl = torch.from_numpy(lbl).long()
+        # lbl = torch.from_numpy(lbl).long()
+        lbl = torch.from_numpy(lbl).float()
+
 
         return img, lbl
 

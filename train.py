@@ -86,6 +86,8 @@ def train(cfg, writer, logger):
     # Setup Cross Entropy Weight
     if cfg['training']['loss']['name'] != 'regression_l1':
         weight = prep_class_val_weights(cfg['training']['cross_entropy_ratio'])
+    else:
+        weight = None
     log('Using loss : {}'.format(cfg['training']['loss']['name']))
     # Setup Augmentations
     augmentations = cfg['training'].get('augmentations', None) # if no augmentation => default None
@@ -194,6 +196,8 @@ def train(cfg, writer, logger):
             outputs = model(images)
             log('TrainIter=> images.size():{} labels.size():{} | outputs.size():{}'.format(images.size(), labels.size(), outputs.size()))
             loss = loss_fn(input=outputs, target=labels, weight=weight, size_average=cfg['training']['loss']['size_average'])
+            loss = nn.L1Loss()
+            loss = loss(outputs, labels)
 
             loss.backward()
             optimizer.step()

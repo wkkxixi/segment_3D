@@ -9,7 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 def regression_l1(input, target, weight=None, size_average=True):
-    loss = nn.L1Loss(input, target, size_average=size_average)
+    # loss = nn.L1Loss(input, target, size_average=size_average)
+    loss = nn.L1Loss(input, target)
     return loss
 def cross_entropy2d(input, target, weight=None, size_average=True):
     n, c, h, w = input.size()
