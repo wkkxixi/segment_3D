@@ -14,6 +14,7 @@ To run ..., you need to install the following packages manually beforehand
 * `tensorboardX`
 * `pyyaml`
 * `tqdm`
+* `scikit-fmm==0.0.7`
 ```
 
 (torch36)$ conda install scikit-image=0.12.3
@@ -23,6 +24,7 @@ To run ..., you need to install the following packages manually beforehand
 (torch36)$ pip install tensorboardX
 (torch36)$ pip install pyyaml
 (torch36)$ conda install -c conda-forge tqdm
+(torch36)$ pip install scikit-fmm==0.0.7
 
 ```
 
