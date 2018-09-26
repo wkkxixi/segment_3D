@@ -15,20 +15,58 @@ class Compose(object):
         self.PIL2Numpy = False
 
     def __call__(self, img, mask):
-        if isinstance(img, np.ndarray):
-            img = Image.fromarray(img, mode="RGB")
-            mask = Image.fromarray(mask, mode="L")
-            self.PIL2Numpy = True
-
         assert img.size == mask.size
         for a in self.augmentations:
             img, mask = a(img, mask)
 
-        if self.PIL2Numpy:
-            img, mask = np.array(img), np.array(mask, dtype=np.uint8)
+        return img, mask
+class RandomHorizontallyFlip3d(object):
+    def __init__(self, p):
+        self.p = p
 
+    def __call__(self, img, mask):
+        if random.random() < self.p:
+            return (
+                np.fliplr(img), np.fliplf(mask)
+            )
         return img, mask
 
+
+class RandomVerticallyFlip3d(object):
+    def __init__(self, p):
+        self.p = p
+
+    def __call__(self, img, mask):
+        if random.random() < self.p:
+            return (
+                (np.flipud(img)).copy(), (np.flipud(mask)).copy()
+            )
+        return img, mask
+
+class RandomFlipInsideOut3d(object):
+    def __init__(self, p):
+        self.p = p # [0,1)
+
+    def __call__(self, img, mask):
+        if random.random() < self.p:
+            return (
+                (np.flip(img, axis=2)).copy(), (np.flip(mask, axis=3)).copy()
+            )
+        return img, mask
+
+
+class RandomRotate3d(object):
+    def __init__(self, degree):
+        self.degree = degree # -180, 180
+
+    def __call__(self, img, mask):
+        from scipy.ndimage import rotate
+        rotate_degree = random.random() * 2 * self.degree - self.degree # -degree, +degree
+        rotation_plane = random.sample(range(0, 3), 2)
+        return (
+            rotate(img, rotate_degree, rotation_plane).copy(),
+            rotate(mask, rotate_degree, rotation_plane).copy()
+            )
 
 class RandomCrop(object):
     def __init__(self, size, padding=0):
@@ -60,8 +98,6 @@ class RandomCrop(object):
             img.crop((x1, y1, x1 + tw, y1 + th)),
             mask.crop((x1, y1, x1 + tw, y1 + th)),
         )
-
-
 class AdjustGamma(object):
     def __init__(self, gamma):
         self.gamma = gamma

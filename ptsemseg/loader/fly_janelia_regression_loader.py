@@ -51,14 +51,19 @@ class flyJaneliaRegLoader(data.Dataset):
         im_path = pjoin(self.root, 'images', im_name + '.tif')
         lbl_path = pjoin(self.root, 'labels_v3', im_name + '.tif')
         # log('=========>  {}'.format(im_path))
-        im = loadtiff3d(im_path)
+        img = loadtiff3d(im_path)
         lbl = loadtiff3d(lbl_path)
 
-        im, lbl = self.find_patch(index, im, lbl)
+        img, lbl = self.find_patch(index, img, lbl)
+
+        if self.augmentations is not None:
+            img, lbl = self.augmentations(img, lbl)
+
+        img, lbl = self.transform(img, lbl)
 
         # if self.is_transform:
         #     im, lbl = self.transform(im, lbl)
-        return im, lbl
+        return img, lbl
 
     def getInfoLists(self):
         log('val_indices: {}'.format(self.data_split_info['val_indices']))
@@ -99,20 +104,21 @@ class flyJaneliaRegLoader(data.Dataset):
         img = img[x:x + 160, y:y + 160, z:z + 8]
         lbl = lbl[x:x + 160, y:y + 160, z:z + 8]
 
+        return img, lbl
 
+    # transform from numpy to tensor
+    def transform(self, img, lbl):
         # img = self.tf(img)
         # lbl = self.tf(lbl)
 
         img = np.stack([img], axis=0)
-        #lbl = (lbl > 0).astype('int')
+        # lbl = (lbl > 0).astype('int')
         lbl = np.stack([lbl], axis=0)
         img = torch.from_numpy(img).float()
         # lbl = torch.from_numpy(lbl).long()
         lbl = torch.from_numpy(lbl).float()
 
-
         return img, lbl
-
 
     # def transform(self, img, lbl):
     #     if self.img_size == ('same', 'same'):

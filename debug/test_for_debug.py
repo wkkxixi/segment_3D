@@ -148,10 +148,21 @@ def usage_of_large_brackets():
 # print(a)
 # print(a['file_paths'])
 
+def rotate3d(degree):
+    degree += 40
+    print('degree is {}'.format(degree))
+
 def learn_yaml():
     import yaml
     with open('/Users/wonh/y3s2/isbi/segment_3D/configs/fcn3d_fly.yml') as fp:
         cfg = yaml.load(fp)
+    dict = cfg['training'].get('augmentations', None)
+    print(dict)
+    train = cfg['training']
+    for a, b in dict.items():
+        if a == 'rotate3d':
+            rotate3d(b)
+        print('a: {}  b: {}'.format(a, b))
     # a = cfg['training']['patch_size']
     # a = a.split(',')
     # a = [int(tmp) for tmp in a]
@@ -161,11 +172,11 @@ def learn_yaml():
     # print(cfg['training']['patch_size'].items())
     # patch_size = [para for axis, para in cfg['training']['patch_size'].items()]
     # print(patch_size)
-    if cfg['model']['arch'] == 'fcn3dnet':
-        print('yeah')
+    # if cfg['model']['arch'] == 'fcn3dnet':
+    #     print('yeah')
 
     # print(cfg.get('data'))
-# learn_yaml()
+# learn_yaml( )
 
  # def learn_seed():
  #     import random
@@ -403,4 +414,35 @@ def test_dt():
     folder = '/Users/wonh/Desktop/flyJanelia-'
     label_folder_name = 'labels_dt'
     swc2tif_operation(folder, label_folder_name, mode=1)
-test_dt()
+# test_dt()
+
+def test_flip():
+    img = loadtiff3d('/Users/wonh/Desktop/flyJanelia/images/2.tif')
+    img1 = np.flipud(img) # up down
+    writetiff3d('/Users/wonh/Desktop/flyJanelia/aug/2_0.tif', img1)
+    img2 = np.fliplr(img) # left right
+    writetiff3d('/Users/wonh/Desktop/flyJanelia/aug/2_1.tif', img2)
+    img3 = np.flip(img, 2) # ?
+    writetiff3d('/Users/wonh/Desktop/flyJanelia/aug/2_2.tif', img3)
+    img3 = None
+    writetiff3d('/Users/wonh/Desktop/flyJanelia/aug/2.tif', img)
+# test_flip()
+
+
+def test_random():
+    import random
+    print(random.random())
+# test_random()
+
+def test_rotate():
+    from scipy.ndimage import rotate
+    img = loadtiff3d('/Users/wonh/Desktop/flyJanelia/images/2.tif')
+    # img1 =
+    writetiff3d('/Users/wonh/Desktop/flyJanelia/aug/2_10_90.tif', rotate(img, 90, axes=[1,0]))
+    writetiff3d('/Users/wonh/Desktop/flyJanelia/aug/2_10_90_original.tif', img)
+test_rotate()
+
+def test_randomint():
+    import random
+    print(random.sample(range(0, 3), 2))
+# test_randomint()

@@ -22,7 +22,12 @@ training:
     n_workers: 3
     print_interval: 1
     print_interval_per_batch: False
+#    augmentations: ['flip3d', 'rotate3d']
     augmentations:
+      hflip3d: 0.5 # [0, 1)
+      vflip3d: 0.5 # [0, 1)
+      iflip3d: 0.5 # [0, 1)
+      rotate3d: 180 # [-180, 180]
 #      aug1: 'par1'
 #      aug2: 'par2'
     optimizer:
