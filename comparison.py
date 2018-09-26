@@ -12,8 +12,8 @@ with open(folderpath+'datainfo/datainfo.txt') as f:
             filename=item.split()[0]
             print(str(count) + ': ' + filename + ' is on processing')
             count += 1
-            gt = folderpath + 'labels/' + filename
-            pred = folderpath + 'pred_unet3d/' + filename
+            gt = folderpath + 'labels_v1/' + filename
+            pred = folderpath + 'pred_fcn3dnet_labelV3/' + filename
             gt = loadtiff3d(gt)/255
             pred = loadtiff3d(pred)/255
             print(gt.shape)
@@ -29,7 +29,7 @@ with open(folderpath+'datainfo/datainfo.txt') as f:
 
 lines = content.split('\n')
 
-with open(folderpath + '40compare_unet3d.csv', "w") as csv_file:
+with open(folderpath + '40compare_fcn3dnet_labelV1_trainV3.csv', "w") as csv_file:
     writer = csv.writer(csv_file)
     for line in lines:
         writer.writerow([line])

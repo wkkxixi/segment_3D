@@ -13,6 +13,7 @@ import torchvision.models as models
 # from ptsemseg.models.frrn import *
 from ptsemseg.models.fcn3dnet import *
 from ptsemseg.models.unet3d import *
+from ptsemseg.models.unet3dreg import *
 
 
 def get_model(model_dict, n_classes, version=None):
@@ -74,7 +75,8 @@ def _get_model_instance(name):
             # "frrnA": frrn,
             # "frrnB": frrn,
             "fcn3dnet" : fcn3dnet,
-            "unet3d": unet3d
+            "unet3d": unet3d,
+            "unet3dreg": unet3dreg
 
         }[name]
     except:

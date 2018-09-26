@@ -200,6 +200,32 @@ class unetConv2_3d(nn.Module):
         outputs = self.conv2(outputs)
         return outputs
 
+class unetConv2_3d_regression(nn.Module):
+    def __init__(self, in_size, out_size, is_batchnorm):
+        super(unetConv2_3d_regression, self).__init__()
+
+        if is_batchnorm:
+            self.conv1 = nn.Sequential(
+                nn.Conv3d(in_size, out_size, 3, 1, 1),
+                nn.BatchNorm3d(out_size),
+                nn.ReLU(),
+            )
+            self.conv2 = nn.Sequential(
+                nn.Conv3d(out_size, out_size, 3, 1, 1),
+                nn.BatchNorm3d(out_size),
+                nn.ReLU(),
+            )
+        else:
+            self.conv1 = nn.Sequential(nn.Conv3d(in_size, out_size, 3, 1, 1), nn.ReLU())
+            self.conv2 = nn.Sequential(
+                nn.Conv3d(out_size, out_size, 3, 1, 1), nn.ReLU()
+            )
+
+    def forward(self, inputs):
+        outputs = self.conv1(inputs)
+        outputs = self.conv2(outputs)
+        return outputs
+
 
 class unetUp(nn.Module):
     def __init__(self, in_size, out_size, is_deconv):
@@ -261,6 +287,38 @@ class unetUp3d(nn.Module):
 
         output = self.conv(output)
         log('unetUp3d: after conv: {}'.format(output.size()))
+        return output
+
+class unetUp3d_regression(nn.Module):
+    def __init__(self, in_size, out_size, is_deconv):
+        super(unetUp3d_regression, self).__init__()
+        self.conv = unetConv2_3d_regression(in_size, out_size, False)
+        if is_deconv:
+            # self.up = nn.ConvTranspose3d(in_size, out_size, kernel_size=2, stride=2)
+            self.up = nn.Sequential(nn.ConvTranspose3d(in_size, out_size, kernel_size=2, stride=2),
+                                  nn.LeakyReLU(0.2, False))
+        else:
+            self.up = F.interpolate(scale_factor=2, mode='bilinear')
+
+
+    def forward(self, inputs1, inputs2):
+        log('unetUp3d_regression: inputs1 size {}, inputs2 size {}'.format(inputs1.size(), inputs2.size()))
+        outputs2 = self.up(inputs2)
+        log('unetUp3d_regression: upsample inputs2, get outputs2 size {}'.format(outputs2.size()))
+        offset1 = outputs2.size()[2] - inputs1.size()[2]
+        offset2 = outputs2.size()[3] - inputs1.size()[3]
+        offset3 = outputs2.size()[4] - inputs1.size()[4]
+        log('unetUp3d_regression: offset between outputs2 and inputs1 is: {}'.format((offset1, offset2, offset3)))
+        padding = [offset3 // 2, offset3 - offset3 // 2, offset2//2, offset2-offset2//2, offset1//2, offset1-offset1//2]
+        log('unetUp3d_regression: padding is: {}'.format(padding))
+        outputs1 = F.pad(inputs1, padding)
+        log('unetUp3d_regression: after padding inputs1, we get outputs1 size {}'.format(outputs1.size()))
+
+        output = torch.cat([outputs1, outputs2], 1)
+        log('unetUp3d_regression: after cat outputs1 and outputs2: {}'.format(output.size()))
+
+        output = self.conv(output)
+        log('unetUp3d_regression: after conv: {}'.format(output.size()))
         return output
 
 

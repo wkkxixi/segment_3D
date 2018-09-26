@@ -1,4 +1,4 @@
-DEBUG=False
+DEBUG=True
 def log(s):
     if DEBUG:
         print(s)
@@ -84,8 +84,9 @@ def train(cfg, writer, logger):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Setup Cross Entropy Weight
-    weight = prep_class_val_weights(cfg['training']['cross_entropy_ratio'])
-
+    if cfg['training']['loss']['name'] != 'regression_l1':
+        weight = prep_class_val_weights(cfg['training']['cross_entropy_ratio'])
+    log('Using loss : {}'.format(cfg['training']['loss']['name']))
     # Setup Augmentations
     augmentations = cfg['training'].get('augmentations', None) # if no augmentation => default None
     data_aug = get_composed_augmentations(augmentations)
@@ -113,6 +114,7 @@ def train(cfg, writer, logger):
         patch_size=patch_size)
 
     n_classes = t_loader.n_classes
+    log('n_classes is: {}'.format(n_classes))
     trainloader = data.DataLoader(t_loader,
                                   batch_size=cfg['training']['batch_size'],
                                   num_workers=cfg['training']['n_workers'],
@@ -149,7 +151,7 @@ def train(cfg, writer, logger):
     if cfg['training']['resume'] is not None:
         log('resume saved model')
         if os.path.isfile(cfg['training']['resume']):
-            logger.info(
+            display(
                 "Loading model and optimizer from checkpoint '{}'".format(cfg['training']['resume'])
             )
             checkpoint = torch.load(cfg['training']['resume'])
@@ -157,13 +159,13 @@ def train(cfg, writer, logger):
             optimizer.load_state_dict(checkpoint["optimizer_state"])
             scheduler.load_state_dict(checkpoint["scheduler_state"])
             start_iter = checkpoint["epoch"]
-            logger.info(
+            display(
                 "Loaded checkpoint '{}' (iter {})".format(
                     cfg['training']['resume'], checkpoint["epoch"]
                 )
             )
         else:
-            logger.info("No checkpoint found at '{}'".format(cfg['training']['resume']))
+            display("No checkpoint found at '{}'".format(cfg['training']['resume']))
             log('no saved model found')
 
     val_loss_meter = averageMeter()

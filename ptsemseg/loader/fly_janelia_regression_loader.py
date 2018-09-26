@@ -15,7 +15,7 @@ from ptsemseg.utils import *
 from scipy.ndimage.interpolation import zoom
 from random import randint
 
-class flyJaneliaLoader(data.Dataset):
+class flyJaneliaRegLoader(data.Dataset):
     def __init__(
         self,
         root,
@@ -29,8 +29,8 @@ class flyJaneliaLoader(data.Dataset):
     ):
         self.root = os.path.expanduser(root)
         self.is_transform = is_transform
-        self.n_classes = 2
-        # self.n_classes = 1 # for regression
+        # self.n_classes = 2
+        self.n_classes = 1 # for regression
         self.augmentations = augmentations
         self.data_split_info = data_split_info
         self.patch_size = 512 if patch_size is None else patch_size
@@ -50,7 +50,7 @@ class flyJaneliaLoader(data.Dataset):
         im_name = self.nameList[index]
         im_path = pjoin(self.root, 'images', im_name + '.tif')
         lbl_path = pjoin(self.root, 'labels', im_name + '.tif')
-        log('=========>  {}'.format(im_path))
+        # log('=========>  {}'.format(im_path))
         im = loadtiff3d(im_path)
         lbl = loadtiff3d(lbl_path)
 
@@ -104,7 +104,7 @@ class flyJaneliaLoader(data.Dataset):
         # lbl = self.tf(lbl)
 
         img = np.stack([img], axis=0)
-        lbl = (lbl > 0).astype('int')
+        # lbl = (lbl > 0).astype('int')
         img = torch.from_numpy(img).float()
         lbl = torch.from_numpy(lbl).long()
 

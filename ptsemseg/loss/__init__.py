@@ -1,11 +1,12 @@
 import copy
 import logging
 import functools
-
 from ptsemseg.loss.loss import cross_entropy2d
 from ptsemseg.loss.loss import cross_entropy3d
 from ptsemseg.loss.loss import bootstrapped_cross_entropy2d
 from ptsemseg.loss.loss import multi_scale_cross_entropy2d
+from ptsemseg.loss.loss import regression_l1
+
 
 
 logger = logging.getLogger('ptsemseg')
@@ -13,7 +14,8 @@ logger = logging.getLogger('ptsemseg')
 key2loss = {'cross_entropy': cross_entropy2d,
             'cross_entropy3d': cross_entropy3d,
             'bootstrapped_cross_entropy': bootstrapped_cross_entropy2d,
-            'multi_scale_cross_entropy': multi_scale_cross_entropy2d,}
+            'multi_scale_cross_entropy': multi_scale_cross_entropy2d,
+            'regression_l1': regression_l1}
 
 def get_loss_function(cfg):
     if cfg['training']['loss'] is None:
@@ -23,6 +25,7 @@ def get_loss_function(cfg):
     else:
         loss_dict = cfg['training']['loss']
         loss_name = loss_dict['name']
+
         loss_params = {k:v for k,v in loss_dict.items() if k != 'name'}
 
         if loss_name not in key2loss:

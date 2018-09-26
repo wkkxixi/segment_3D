@@ -10,7 +10,12 @@ from os.path import join as pjoin
 # from ptsemseg.utils import *
 
 flypath = '/home/heng/Desktop/Research/isbi/flyJanelia/'
-model_path = '/home/heng/Desktop/Research/0920/segment_3D/runs/fcn3d_fly/20064/unet3d_flyJanelia_best_model.pkl'
+model_path = '/home/heng/Desktop/Research/0920/segment_3D/runs/fcn3d_fly/80095/fcn3dnet_flyJanelia_best_model.pkl'
+pred_folder = flypath + 'pred_fcn3dnet_labelsV2-completed/'
+if not os.path.isdir(os.path.join(os.getcwd(), pred_folder)):
+    os.mkdir(pred_folder)
+else:
+    print(pred_folder + ' already exists')
 # im_path = pjoin(flypath, 'images', im_name + '.tif')
 with open(pjoin(flypath, 'datainfo', 'datainfo.txt')) as f:
     lines = f.readlines()
@@ -21,7 +26,7 @@ with open(pjoin(flypath, 'datainfo', 'datainfo.txt')) as f:
             img_path = flypath + 'images/' + filename
             # img_path = pjoin(flypath, 'images', filename)
             # output_path = pjoin(flypath, 'pred', filename)
-            output_path = flypath + 'pred_unet3d/' + filename
+            output_path = pred_folder + filename # radius 1
 
 
             cmd ='python3 test.py  --img_path ' + img_path + ' --out_path ' + output_path + ' --model_path ' + model_path
