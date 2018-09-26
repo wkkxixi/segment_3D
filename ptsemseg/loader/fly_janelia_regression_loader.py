@@ -1,4 +1,4 @@
-DEBUG=True
+DEBUG=False
 def log(s):
     if DEBUG:
         print(s)
@@ -61,7 +61,8 @@ class flyJaneliaRegLoader(data.Dataset):
         if self.augmentations is not None:
             img, lbl = self.augmentations(img, lbl)
         log('after augmentation: img shape: {}'.format(img.shape))
-
+        #writetiff3d(pjoin(self.root, 'augmentation', im_name + '_augmentation.tif'), img)
+        #writetiff3d(pjoin(self.root, 'augmentation_labels', im_name + '_augmentation_label.tif'), lbl)
         img, lbl = self.find_patch(img, lbl)
         log('after find_patch: img shape: {}; should be 160x160x8'.format(img.shape))
 

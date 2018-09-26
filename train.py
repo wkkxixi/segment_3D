@@ -1,7 +1,8 @@
-DEBUG=True
+DEBUG=False
 def log(s):
     if DEBUG:
         print(s)
+
 
 def display(string):
     print(string)
@@ -71,6 +72,7 @@ import time
 
 
 def train(cfg, writer, logger):
+    log('strange!!!!!')
     # Setup dataset split before setting up the seed for random
     data_split_info = init_data_split(cfg['data']['path'])  # fly jenelia dataset
 
