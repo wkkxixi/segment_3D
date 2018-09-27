@@ -56,3 +56,26 @@ python test.py [-h] [--model_path [MODEL_PATH]] [--dataset [DATASET]]
 ```
 tensorboard --logdir runs
 ```
+
+
+**To organize your dataset:**
+```
+dataset
+  => sub-dataset1
+    => images (store all your original optical images eg. TIFF file)
+    => labels (TIFF file converted from swc file using distance transform preprocessing)
+    => ground_truth (TIFF file converted from swc file without any preprocessing)
+  => sub-dataset2
+    => images
+    => labels
+    => ground_truth
+  => sub-dataset3
+    => images
+    => labels
+    => ground_truth
+  .....
+  => sub-dataset-n
+    => images
+    => labels
+    => ground_truth
+```
