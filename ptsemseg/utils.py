@@ -79,6 +79,40 @@ def info_generator(folder):
             z = img.shape[2]
             f.write(filename + ' ' + str(x) + ' ' + str(y) + ' ' + str(z) + '\n')
 
+def new_folder_maker(folder_path):
+    if not os.path.isdir(os.path.join(os.getcwd(), folder_path)):
+        os.mkdir(folder_path)
+    else:
+        print(folder_path + ' already exists')
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+'''
+Generate the standard dataset for a given folder
+'''
+def dataset_generator(folder):
+    from os.path import join as pjoin
+    import shutil
+    import fnmatch
+    img_folder_path = pjoin(folder, 'images')
+    swc_folder_path = pjoin(folder, 'swc')
+    new_folder_maker(img_folder_path)
+    new_folder_maker(swc_folder_path)
+
+    for filename in os.listdir(folder):
+        if fnmatch.fnmatch(filename, '*.tif') and is_number(filename.split('.tif')[-2]):
+            shutil.move(pjoin(folder, filename), pjoin(img_folder_path, filename))
+        if fnmatch.fnmatch(filename, '*.swc') and is_number(filename.split('.swc')[-2]):
+            shutil.move(pjoin(folder, filename), pjoin(swc_folder_path, filename))
+    info_generator(folder)
+    swc2tif_operation(folder, 'labels', mode=1)
+    swc2tif_operation(folder, 'ground_truth', mode=0)
+
+
 '''
 Reconstruct 3d tiff image based on its swc annotation result
 '''
@@ -118,7 +152,7 @@ def swc2tif_operation(folder, label_folder_name, mode = 0):
     for c in content:
         filename = (c.split()[0]).split('.tif')[0]
         print(filename + '.swc is on processing')
-        file_path = folder + '/ground_truth/' + filename + '.swc'
+        file_path = folder + '/swc/' + filename + '.swc'
         converted_path = label_folder + '/' + filename + '.tif'
         tif_path = folder + '/images/' + filename + '.tif'
         if mode == 1:
@@ -161,17 +195,23 @@ def swc2tif_dt(swc_path, tif_path, output_path):
     # Deal with nodes in swc
     for i in range(swc.shape[0]):
         node = [math.floor(n) for n in swc[i, 2:5]]
+        for j in range(3):
+            if node[j] > shape[j]-1:
+                node[j] = shape[j]-1
         r = int(swc[i, -2])
         skimg[node[0], node[1], node[2]] = 0
-        zeromask[node[0]-r: node[0]+r, node[1]-r:node[1]+r, node[2]-r:node[2]+r] = 0
+        zeromask[max(0,node[0]-r): min(node[0]+r, shape[0]), max(0,node[1]-r):min(node[1]+r, shape[1]), max(0, node[2]-r):min(node[2]+r, shape[2])] = 0
 
     # Deal with the extra nodes
     ex_count = 0
     for ex in extra_nodes:
         node = [math.floor(n) for n in ex[0]] # get integer x, y, z
+        for j in range(3):
+            if node[j] > shape[j]-1:
+                node[j] = shape[j]-1
         skimg[node[0], node[1], node[2]] = 0
         r = int(extra_nodes_radius[ex_count])
-        zeromask[node[0] - r: node[0] + r, node[1] - r:node[1] + r, node[2] - r:node[2] + r] = 0
+        zeromask[max(0,node[0]-r): min(node[0]+r, shape[0]), max(0,node[1]-r):min(node[1]+r, shape[1]), max(0, node[2]-r):min(node[2]+r, shape[2])] = 0
         ex_count += 1
 
     a, dm = 6, 5

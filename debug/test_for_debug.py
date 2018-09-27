@@ -451,4 +451,37 @@ def test_array():
     a = np.asarray([1,2,3])
     b = np.asarray([True, False, True])
     print(a[b])
-test_array()
+# test_array()
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+# def dataset_generator(folder):
+#     from os.path import join as pjoin
+#     import shutil
+#     import fnmatch
+#     # img_folder_path = pjoin(folder, 'images')
+#     # swc_folder_path = pjoin(folder, 'ground_truth')
+#     # label_folder_path = pjoin(folder, 'labels')
+#     # new_folder_maker(img_folder_path)
+#     # new_folder_maker(swc_folder_path)
+#     # new_folder_maker(label_folder_path)
+#
+#     for filename in os.listdir(folder):
+#         if fnmatch.fnmatch(filename, '*.tif') and is_number(filename.split('.tif')[-2]):
+#             print(filename)
+# # dataset_generator('/Users/wonh/Desktop/FLY-TAIWAN')
+
+def test_dataset_generator(folder):
+    dataset_generator(folder)
+# info_generator('/Users/wonh/Desktop/FLY-TAIWAN')
+test_dataset_generator('/Users/wonh/Desktop/FLY-TAIWAN')
+
+def test_out_of_bound():
+    a = np.asarray([1,2,3])
+    a[-9:10] = 0
+    print(a)
+# test_out_of_bound()
