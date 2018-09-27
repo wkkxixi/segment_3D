@@ -10,18 +10,26 @@ def display(string):
 '''
 split dataset into train and validation randomly by ratio
 '''
-def init_data_split(root):
+def init_data_split(root, split_ratio):
     from glob import glob
     from random import shuffle
     from os.path import join as pjoin
-    root += 'images/'
-    data_paths = glob(root + '*.tif')
-    ratio = 0# dataset has only 4 data, if you set ratio to 0.1 then there would be no validation set
-    all_indices = [path.split('/')[-1].split('.tif')[0] for path in data_paths]
-    shuffle(all_indices)
-    val_indices = all_indices[:int(ratio*(len(all_indices)))]
-    shuffle(val_indices)
-    return {'data_paths': data_paths, 'val_indices': val_indices, 'all_indices':all_indices}
+    img_paths = []
+
+    for dir_name in os.listdir(root):
+        if dir_name.__contains__('fly'):
+            sub_dataset = pjoin(root, dir_name)
+            sub_dataset_imgs = pjoin(sub_dataset, 'images')
+            sub_dataset_img_paths = glob(sub_dataset_imgs + '/*.tif')
+            ratio = split_ratio
+            img_paths.extend([path.split('/')[-3] + '/' + path.split('/')[-1] for path in sub_dataset_img_paths])
+    shuffle(img_paths)
+    val_paths = img_paths[:int(ratio*(len(img_paths)))]
+    log('length of val_paths is: {}'.format(len(val_paths)))
+    log('length of img_paths is: {}'.format(len(img_paths)))
+    shuffle(val_paths)
+    return {'img_paths': img_paths, 'val_paths': val_paths}
+
 
 def prep_class_val_weights(ratio):
     weight_foreback = torch.ones(2)
@@ -35,11 +43,7 @@ def prep_class_val_weights(ratio):
 def time_keeper():
     end = time.time()
     elapsed = end - start
-    hour = int(elapsed / 3600)
-    left = elapsed % 3600
-    minute = int(left / 60)
-    seconds = left % 60
-    logger.info('The total time is: {} h {} m {} s'.format(hour, minute, seconds))
+    logger.info('The total time is: {}'.format(time_converter(elapsed)))
 
 def time_converter(elapsed):
     hour = int(elapsed / 3600)
@@ -80,9 +84,8 @@ import time
 
 
 def train(cfg, writer, logger):
-    log('strange!!!!!')
     # Setup dataset split before setting up the seed for random
-    data_split_info = init_data_split(cfg['data']['path'])  # fly jenelia dataset
+    data_split_info = init_data_split(cfg['data']['path'], cfg['data'].get('split_ratio', 0))  # fly jenelia dataset
 
     # Setup seeds
     torch.manual_seed(cfg.get('seed', 1337))
@@ -99,6 +102,7 @@ def train(cfg, writer, logger):
     else:
         weight = None
     log('Using loss : {}'.format(cfg['training']['loss']['name']))
+
     # Setup Augmentations
     augmentations = cfg['training'].get('augmentations', None) # if no augmentation => default None
     data_aug = get_composed_augmentations(augmentations)
@@ -111,8 +115,6 @@ def train(cfg, writer, logger):
     t_loader = data_loader(
         data_path,
         split=cfg['data']['train_split'],
-        is_transform=True,
-        # img_size=(cfg['data']['img_rows'], cfg['data']['img_cols']),
         augmentations=data_aug,
         data_split_info=data_split_info,
         patch_size=patch_size)
@@ -120,8 +122,6 @@ def train(cfg, writer, logger):
     v_loader = data_loader(
         data_path,
         split=cfg['data']['val_split'],
-        is_transform=True,
-        # img_size=(cfg['data']['img_rows'], cfg['data']['img_cols']),
         data_split_info=data_split_info,
         patch_size=patch_size)
 
@@ -206,7 +206,7 @@ def train(cfg, writer, logger):
             optimizer.zero_grad()
             outputs = model(images)
             # log('TrainIter=> images.size():{} labels.size():{} | outputs.size():{}'.format(images.size(), labels.size(), outputs.size()))
-            loss = loss_fn(input=outputs, target=labels, weight=weight, size_average=cfg['training']['loss']['size_average'])
+            # loss = loss_fn(input=outputs, target=labels, weight=weight, size_average=cfg['training']['loss']['size_average'])
             loss = nn.L1Loss()
             loss = loss(outputs, labels)
 

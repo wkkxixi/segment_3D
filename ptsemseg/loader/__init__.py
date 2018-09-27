@@ -12,6 +12,7 @@ import json
 # from ptsemseg.loader.mapillary_vistas_loader import mapillaryVistasLoader
 from ptsemseg.loader.fly_janelia_loader import flyJaneliaLoader
 from ptsemseg.loader.fly_janelia_regression_loader import flyJaneliaRegLoader
+from ptsemseg.loader.fly_dataset_loader import flyDatasetLoader
 
 
 def get_loader(name):
@@ -29,7 +30,8 @@ def get_loader(name):
         # "sunrgbd": SUNRGBDLoader,
         # "vistas": mapillaryVistasLoader,
         "flyJanelia":flyJaneliaLoader,
-        "flyJaneliaRegression":flyJaneliaRegLoader
+        "flyJaneliaRegression":flyJaneliaRegLoader,
+        "flyDataset": flyDatasetLoader
     }[name]
 
 

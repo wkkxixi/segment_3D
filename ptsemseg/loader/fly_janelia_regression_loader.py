@@ -102,9 +102,7 @@ class flyJaneliaRegLoader(data.Dataset):
     def getInfoLists(self):
         log('val_indices: {}'.format(self.data_split_info['val_indices']))
         nameList = []
-        # xList = []
-        # yList = []
-        # zList = []
+
         with open(pjoin(self.root, 'datainfo', 'datainfo.txt')) as f:
             content = f.readlines()
         content = [x.strip() for x in content]
@@ -118,11 +116,7 @@ class flyJaneliaRegLoader(data.Dataset):
                 if not (c.split()[0]).split('.tif')[0] in self.data_split_info['val_indices']:
                     continue
             nameList.append((c.split()[0]).split('.tif')[0])
-            # xList.append(int(c.split()[1]))
-            # yList.append(int(c.split()[2]))
-            # zList.append(int(c.split()[3]))
         log('loader init for {} has nameList({})'.format(self.split, len(nameList)))
-        # return nameList, xList, yList, zList
         return nameList
 
     # find 160x160x8 patch for the image in given index

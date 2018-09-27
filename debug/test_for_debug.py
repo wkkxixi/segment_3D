@@ -478,10 +478,33 @@ def is_number(s):
 def test_dataset_generator(folder):
     dataset_generator(folder)
 # info_generator('/Users/wonh/Desktop/FLY-TAIWAN')
-test_dataset_generator('/Users/wonh/Desktop/FLY-TAIWAN')
+# test_dataset_generator('/Users/wonh/Desktop/janeliafly2')
 
 def test_out_of_bound():
     a = np.asarray([1,2,3])
     a[-9:10] = 0
     print(a)
 # test_out_of_bound()
+
+def test_list(folder):
+    from glob import glob
+    for filename in os.listdir(folder):
+        if filename.__contains__('fly'):
+            print(filename)
+            sub_dataset = pjoin(folder, filename)
+            imgs = pjoin(sub_dataset, 'images')
+            print(imgs)
+            data_paths = glob(imgs + '/*.tif')
+            print(data_paths)
+
+# test_list('/Users/wonh/Desktop/fly-dataset/')
+
+def test_empty_list():
+    a = []
+    print(a)
+    a.extend([2,3,4])
+    print(a)
+    # stack = ['a', 'b']
+    # stack.extend(['d', 'g'])
+    # print(stack)
+test_empty_list()
