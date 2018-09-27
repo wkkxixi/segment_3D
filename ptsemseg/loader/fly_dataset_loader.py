@@ -41,9 +41,10 @@ class flyDatasetLoader(data.Dataset):
     def __getitem__(self, index):
         img_dataset = self.pathList[index].split('/')[0]
         img_name = self.pathList[index].split('/')[1]
-        img_path = pjoin(self.root, img_dataset, 'images', img_name)
-
-        lbl_path = pjoin(self.root, img_dataset, 'labels', img_name)
+        # img_path = pjoin(self.root, img_dataset, 'images', img_name) # too slow
+        img_path = self.root + '/' + img_dataset + '/' + 'images' + img_name
+        lbl_path = self.root + '/' + img_dataset + '/' + 'labels' + img_name
+        # lbl_path = pjoin(self.root, img_dataset, 'labels', img_name)
         log('Loader: {}: img: {} label: {}'.format(index, img_path, lbl_path))
         img = loadtiff3d(img_path)
         lbl = loadtiff3d(lbl_path)
