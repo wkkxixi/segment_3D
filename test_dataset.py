@@ -10,8 +10,8 @@ from os.path import join as pjoin
 # from ptsemseg.utils import *
 
 flypath = '/home/heng/Desktop/Research/isbi/flyJanelia/'
-model_path = '/home/heng/Desktop/Research/0920/segment_3D/runs/fcn3d_fly/80095/fcn3dnet_flyJanelia_best_model.pkl'
-pred_folder = flypath + 'pred_fcn3dnet_labelsV2-completed/'
+model_path = '/home/heng/Desktop/Research/0920/segment_3D/runs/fcn3d_fly/64894/fcn3dnet_flyJanelia_best_model.pkl'
+pred_folder = flypath + 'pred_fcn3dnet_regression/'
 if not os.path.isdir(os.path.join(os.getcwd(), pred_folder)):
     os.mkdir(pred_folder)
 else:

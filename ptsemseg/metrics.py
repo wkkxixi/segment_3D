@@ -1,6 +1,6 @@
 # Adapted from score written by wkentaro
 # https://github.com/wkentaro/pytorch-fcn/blob/master/torchfcn/utils.py
-DEBUG=False
+DEBUG=True
 def log(s):
     if DEBUG:
         print(s)
@@ -14,10 +14,19 @@ class runningScore(object):
         self.confusion_matrix = np.zeros((n_classes, n_classes))
         self.patch_dice_list = []
 
+    # def _fast_hist(self, label_true, label_pred, n_class):
+    #     mask = (label_true >= 0) & (label_true < n_class)
+    #     hist = np.bincount(
+    #         n_class * label_true[mask].astype(int) + label_pred[mask],
+    #         minlength=n_class ** 2,
+    #     ).reshape(n_class, n_class)
+    #     return hist
+
     def _fast_hist(self, label_true, label_pred, n_class):
-        mask = (label_true >= 0) & (label_true < n_class)
+        mask = (label_true >= 60)
+        # & (label_true < n_class)
         hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask],
+            n_class * label_true[mask] + label_pred[mask],
             minlength=n_class ** 2,
         ).reshape(n_class, n_class)
         return hist
@@ -26,6 +35,7 @@ class runningScore(object):
         log('metrics=>update(): len(label_preds): {}'.format(len(label_preds)))
         for data_idx in range(label_preds.shape[0]):
             label_pred, label_true = label_preds[data_idx], label_trues[data_idx]
+            log('metrics=>update(): data_idx {} got label_pred shape: {}  label_true shape: {}'.format(data_idx, label_pred.shape, label_true.shape))
             dice = np.sum(label_pred[label_true == 1]) * 2.0 / (np.sum(label_pred) + np.sum(label_true)) # f1 score
             self.patch_dice_list.append(dice)
         for lt, lp in zip(label_trues, label_preds):

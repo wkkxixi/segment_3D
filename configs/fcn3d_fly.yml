@@ -18,7 +18,7 @@ training:
         y: 160
         z: 8
     cross_entropy_ratio: 0.003
-    val_interval: 201
+    val_interval: 1
     n_workers: 3
     print_interval: 1
     print_interval_per_batch: False

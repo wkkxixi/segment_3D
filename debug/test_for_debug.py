@@ -440,9 +440,15 @@ def test_rotate():
     # img1 =
     writetiff3d('/Users/wonh/Desktop/flyJanelia/aug/2_10_90.tif', rotate(img, 90, axes=[1,0]))
     writetiff3d('/Users/wonh/Desktop/flyJanelia/aug/2_10_90_original.tif', img)
-test_rotate()
+# test_rotate()
 
 def test_randomint():
     import random
     print(random.sample(range(0, 3), 2))
 # test_randomint()
+
+def test_array():
+    a = np.asarray([1,2,3])
+    b = np.asarray([True, False, True])
+    print(a[b])
+test_array()

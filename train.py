@@ -1,4 +1,4 @@
-DEBUG=False
+DEBUG=True
 def log(s):
     if DEBUG:
         print(s)
@@ -16,7 +16,7 @@ def init_data_split(root):
     from os.path import join as pjoin
     root += 'images/'
     data_paths = glob(root + '*.tif')
-    ratio = 0.3 # dataset has only 4 data, if you set ratio to 0.1 then there would be no validation set
+    ratio = 0# dataset has only 4 data, if you set ratio to 0.1 then there would be no validation set
     all_indices = [path.split('/')[-1].split('.tif')[0] for path in data_paths]
     shuffle(all_indices)
     val_indices = all_indices[:int(ratio*(len(all_indices)))]
@@ -40,6 +40,14 @@ def time_keeper():
     minute = int(left / 60)
     seconds = left % 60
     logger.info('The total time is: {} h {} m {} s'.format(hour, minute, seconds))
+
+def time_converter(elapsed):
+    hour = int(elapsed / 3600)
+    left = elapsed % 3600
+    minute = int(left / 60)
+    seconds = left % 60
+    return '{} h {} m {} s'.format(hour, minute, seconds)
+
 
 import os
 # import sys
@@ -124,9 +132,9 @@ def train(cfg, writer, logger):
                                   num_workers=cfg['training']['n_workers'],
                                   shuffle=False)
 
-    valloader = data.DataLoader(v_loader,
-                                batch_size=cfg['training']['batch_size'],
-                                num_workers=cfg['training']['n_workers'])
+    # valloader = data.DataLoader(v_loader,
+    #                             batch_size=cfg['training']['batch_size'],
+    #                             num_workers=cfg['training']['n_workers'])
 
     # Setup Metrics
     running_metrics_val = runningScore(n_classes) # a confusion matrix is created
@@ -151,6 +159,7 @@ def train(cfg, writer, logger):
     logger.info("Using loss {}".format(loss_fn))
     softmax_function = nn.Softmax(dim=1)
 
+    model_count = 0
     start_iter = 0
     if cfg['training']['resume'] is not None:
         log('resume saved model')
@@ -196,7 +205,7 @@ def train(cfg, writer, logger):
 
             optimizer.zero_grad()
             outputs = model(images)
-            log('TrainIter=> images.size():{} labels.size():{} | outputs.size():{}'.format(images.size(), labels.size(), outputs.size()))
+            # log('TrainIter=> images.size():{} labels.size():{} | outputs.size():{}'.format(images.size(), labels.size(), outputs.size()))
             loss = loss_fn(input=outputs, target=labels, weight=weight, size_average=cfg['training']['loss']['size_average'])
             loss = nn.L1Loss()
             loss = loss(outputs, labels)
@@ -218,8 +227,11 @@ def train(cfg, writer, logger):
                 time_meter.reset()
             i_batch_idx += 1
         time_for_one_iteration = time.time() - train_iter_start_time
-        display('EntireTime for {}th training iteration: {:.4f}   EntireTime/Image: {:.4f}'.format(i_train_iter + 1,
-                                  time_for_one_iteration, time_for_one_iteration / (len(trainloader)*cfg['training']['batch_size'])))
+        # time_converter(time_for_one_iteration)
+        # display('EntireTime for {}th training iteration: {:.4f}   EntireTime/Image: {:.4f}'.format(i_train_iter + 1,
+        #                           time_for_one_iteration, time_for_one_iteration / (len(trainloader)*cfg['training']['batch_size'])))
+        display('EntireTime for {}th training iteration: {}  EntireTime/Image: {}'.format(i_train_iter+1, time_converter(time_for_one_iteration),
+                                                                                          time_converter(time_for_one_iteration/(len(trainloader)*cfg['training']['batch_size']))))
 
         # validation
         validation_check = (i_train_iter + 1) % cfg['training']['val_interval'] == 0 or \
@@ -227,68 +239,83 @@ def train(cfg, writer, logger):
         if not validation_check:
             print('no validation check')
         else:
-            model.eval()
-            with torch.no_grad():
-                log('start tqdm...')
-                # for i_val, (images_val, labels_val) in tqdm(enumerate(valloader)):
-                i_val = 0
-                # for i_val, (images_val, labels_val) in enumerate(valloader):
-                for (images_val, labels_val) in valloader:
-
-                    log('i_val: {} => inside for loop'.format(i_val))
-                    images_val = images_val.to(device)
-                    labels_val = labels_val.to(device)
-
-                    outputs = model(images_val)
-                    log('ValIter=> images_val.size():{} labels_val.size():{} | outputs.size():{}'.format(
-                        images_val.size(),
-                        labels_val.size(),
-                        outputs.size()))
-                    val_loss = loss_fn(input=outputs, target=labels, weight=weight, size_average=cfg['training']['loss']['size_average'])
-
-                    pred = outputs.data.max(1)[1].cpu().numpy()
-                    gt = labels_val.data.cpu().numpy()
-
-                    running_metrics_val.update(gt, pred)
-                    val_loss_meter.update(val_loss.item())
-                    i_val += 1
-                log('outside for loop tqdm')
-            writer.add_scalar('loss/val_loss', val_loss_meter.avg, i_train_iter + 1)
-            logger.info("Iter %d Loss: %.4f" % (i_train_iter + 1, val_loss_meter.avg))
-            log('get score...')
-            '''
-            This CODE-BLOCK is used to calculate and update the evaluation matrcs 
-            '''
-            score, class_iou = running_metrics_val.get_scores()
-            for k, v in score.items():
-                print(k, v)
-                logger.info('{}: {}'.format(k, v))
-                writer.add_scalar('val_metrics/{}'.format(k), v, i_train_iter + 1)
-
-            for k, v in class_iou.items():
-                logger.info('{}: {}'.format(k, v))
-                writer.add_scalar('val_metrics/cls_{}'.format(k), v, i_train_iter + 1)
-
-            val_loss_meter.reset()
-            running_metrics_val.reset()
+            # model.eval()
+            # with torch.no_grad():
+            #     log('start tqdm...')
+            #     # for i_val, (images_val, labels_val) in tqdm(enumerate(valloader)):
+            #     i_val = 0
+            #     # for i_val, (images_val, labels_val) in enumerate(valloader):
+            #     for (images_val, labels_val) in valloader:
+            #
+            #         log('i_val: {} => inside for loop'.format(i_val))
+            #         images_val = images_val.to(device)
+            #         labels_val = labels_val.to(device)
+            #
+            #         outputs = model(images_val)
+            #         log('ValIter=> images_val.size():{} labels_val.size():{} | outputs.size():{}'.format(
+            #             images_val.size(),
+            #             labels_val.size(),
+            #             outputs.size()))
+            #         val_loss = loss_fn(input=outputs, target=labels, weight=weight, size_average=cfg['training']['loss']['size_average'])
+            #
+            #         # pred = outputs.data.max(1)[1].cpu().numpy() # for classes 2
+            #         pred = outputs.data.cpu().numpy()
+            #         gt = labels_val.data.cpu().numpy()
+            #         log('validation: gt shape: {}  pred shape: {}'.format(gt.shape, pred.shape))
+            #         running_metrics_val.update(gt, pred)
+            #         val_loss_meter.update(val_loss.item())
+            #         i_val += 1
+            #     log('outside for loop tqdm')
+            # writer.add_scalar('loss/val_loss', val_loss_meter.avg, i_train_iter + 1)
+            # logger.info("Iter %d Loss: %.4f" % (i_train_iter + 1, val_loss_meter.avg))
+            # log('get score...')
+            # '''
+            # This CODE-BLOCK is used to calculate and update the evaluation matrcs
+            # '''
+            # score, class_iou = running_metrics_val.get_scores()
+            # for k, v in score.items():
+            #     print(k, v)
+            #     logger.info('{}: {}'.format(k, v))
+            #     writer.add_scalar('val_metrics/{}'.format(k), v, i_train_iter + 1)
+            #
+            # for k, v in class_iou.items():
+            #     logger.info('{}: {}'.format(k, v))
+            #     writer.add_scalar('val_metrics/cls_{}'.format(k), v, i_train_iter + 1)
+            #
+            # val_loss_meter.reset()
+            # running_metrics_val.reset()
 
             '''
             This IF-CHECK is used to update the best model
             '''
-            if score["Mean IoU       : \t"] >= best_iou:
-                best_iou = score["Mean IoU       : \t"]
-                state = {
-                    "epoch": i_train_iter + 1,
-                    "model_state": model.state_dict(),
-                    "optimizer_state": optimizer.state_dict(),
-                    "scheduler_state": scheduler.state_dict(),
-                    "best_iou": best_iou,
-                }
-                save_path = os.path.join(writer.file_writer.get_logdir(),
-                                         "{}_{}_best_model.pkl".format(
-                                             cfg['model']['arch'],
-                                             cfg['data']['dataset']))
-                torch.save(state, save_path)
+            # if score["Mean IoU       : \t"] >= best_iou:
+            #     best_iou = score["Mean IoU       : \t"]
+            #     state = {
+            #         "epoch": i_train_iter + 1,
+            #         "model_state": model.state_dict(),
+            #         "optimizer_state": optimizer.state_dict(),
+            #         "scheduler_state": scheduler.state_dict(),
+            #         "best_iou": best_iou,
+            #     }
+            #     save_path = os.path.join(writer.file_writer.get_logdir(),
+            #                              "{}_{}_best_model.pkl".format(
+            #                                  cfg['model']['arch'],
+            #                                  cfg['data']['dataset']))
+            #     torch.save(state, save_path)
+
+            state = {
+                "epoch": i_train_iter + 1,
+                "model_state": model.state_dict(),
+                "optimizer_state": optimizer.state_dict(),
+                "scheduler_state": scheduler.state_dict(),
+            }
+            save_path = os.path.join(writer.file_writer.get_logdir(),
+                                     "{}_{}_model_{}.pkl".format(
+                                         cfg['model']['arch'],
+                                         cfg['data']['dataset'],
+                                         model_count))
+            torch.save(state, save_path)
+            model_count += 1
 
         i_train_iter += 1
 
