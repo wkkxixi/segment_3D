@@ -478,8 +478,9 @@ def is_number(s):
 def test_dataset_generator(folder):
     dataset_generator(folder)
 # info_generator('/Users/wonh/Desktop/FLY-TAIWAN')
-# test_dataset_generator('/Users/wonh/Desktop/janeliafly2')
+test_dataset_generator('/home/heng/Desktop/Research/isbi/fly-dataset/janeliafly2')
 
+test_dataset_generator('/home/heng/Desktop/Research/isbi/fly-dataset/utokyofly')
 def test_out_of_bound():
     a = np.asarray([1,2,3])
     a[-9:10] = 0
@@ -507,4 +508,4 @@ def test_empty_list():
     # stack = ['a', 'b']
     # stack.extend(['d', 'g'])
     # print(stack)
-test_empty_list()
+#test_empty_list()

@@ -6,8 +6,8 @@ data:
     val_split: val
     img_rows: 'same'
     img_cols: 'same'
-    path: '/Users/wonh/Desktop/fly-dataset/' # for mac
-#    path: '/home/heng/Desktop/Research/isbi/flyJanelia/' # for ubuntu
+    #path: '/Users/wonh/Desktop/fly-dataset/' # for mac
+    path: '/home/heng/Desktop/Research/isbi/fly-dataset/' # for ubuntu
 training:
     train_iters: 200
     batch_size: 2
