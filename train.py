@@ -15,18 +15,25 @@ def init_data_split(root, split_ratio, compound_dataset = False):
     from random import shuffle
     from os.path import join as pjoin
     ratio = split_ratio
+    meta_path = pjoin(root, 'meta.txt')
     img_paths = []
-    compound_dataset = False
-    if compound_dataset:
-        for dir_name in os.listdir(root):
-            if dir_name.__contains__('fly'):
-                sub_dataset = pjoin(root, dir_name)
-                sub_dataset_imgs = pjoin(sub_dataset, 'images')
-                sub_dataset_img_paths = glob(sub_dataset_imgs + '/*.tif')
-                ratio = split_ratio
-                img_paths.extend([path.split('/')[-3] + '/' + path.split('/')[-1] for path in sub_dataset_img_paths])
-    else:
-        img_paths = glob(pjoin(root, 'images') + '/*.tif')
+    with open(meta_path) as f:
+        lines = f.readlines()
+        for item in lines:
+            if item.__contains__('.tif'):
+                img_paths.append(item)
+
+    # compound_dataset = False
+    # if compound_dataset:
+    #     for dir_name in os.listdir(root):
+    #         if dir_name.__contains__('fly'):
+    #             sub_dataset = pjoin(root, dir_name)
+    #             sub_dataset_imgs = pjoin(sub_dataset, 'images')
+    #             sub_dataset_img_paths = glob(sub_dataset_imgs + '/*.tif')
+    #             ratio = split_ratio
+    #             img_paths.extend([path.split('/')[-3] + '/' + path.split('/')[-1] for path in sub_dataset_img_paths])
+    # else:
+    #     img_paths = glob(pjoin(root, 'images') + '/*.tif')
     shuffle(img_paths)
     val_paths = img_paths[:int(ratio*(len(img_paths)))]
     log('length of val_paths is: {}'.format(len(val_paths)))
