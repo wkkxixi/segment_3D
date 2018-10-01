@@ -530,3 +530,13 @@ def test_meta(folder):
     dataset_meta(folder)
 
 # test_meta('/home/heng/Desktop/Research/isbi/fly-dataset/utokyofly')
+
+def test_replace():
+    a = 'good/images/2.tif'
+    b = a.replace('images', 'pred')
+    print(a)
+    print(b)
+    b = b[:-2]
+    print(a)
+    print(b)
+test_replace()

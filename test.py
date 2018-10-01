@@ -1,4 +1,4 @@
-DEBUG=True
+DEBUG=False
 def log(s):
     if DEBUG:
         print(s)
@@ -53,7 +53,7 @@ def test(args):
     log('model_name: {}'.format(model_name))
 
     # Setup image
-    print("Read Input Image from : {}".format(args.img_path))
+    # print("Read Input Image from : {}".format(args.img_path))
     img = loadtiff3d(args.img_path)
     oldeShapeX = img.shape[0]
     oldeShapeY = img.shape[1]
@@ -173,12 +173,19 @@ def test(args):
 
     # maxV = np.max(stack_alongX)
     # minV = np.min(stack_alongX)
-    print('maximum: {} minimum: {}'.format(np.max(stack_alongX), np.min(stack_alongX)))
+    # print('maximum: {} minimum: {}'.format(np.max(stack_alongX), np.min(stack_alongX)))
     # maxV = np.max(stack_alongX)
     # minV = np.min(stack_alongX)
     # threshold = (maxV + 0)/8
     # stack_alongX = (stack_alongX > threshold).astype('int')
-    writetiff3d(args.out_path, (stack_alongX*255))
+    out_path = args.out_path
+    img_name = out_path.split('/')[-1]
+    pred_folder = out_path.split('.tif')[:-2]
+    if not os.path.isdir(os.path.join(os.getcwd(), pred_folder)):
+        os.mkdir(pred_folder)
+    else:
+        print(pred_folder + ' already exists')
+    writetiff3d(pred_folder+'/'+img_name, (stack_alongX*255))
     # writetiff3d(args.out_path, stack_alongX*255 > 60)
 
 

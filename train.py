@@ -322,7 +322,7 @@ def train(cfg, writer, logger):
                                          model_count))
             with open('/home/heng/Desktop/Research/isbi/log.txt', 'a') as f:
                 id = cfg['id']
-                f.writelines(str(id) + ':' + save_path)
+                f.write(str(id) + ':' + save_path + '\n')
 
 
             torch.save(state, save_path)

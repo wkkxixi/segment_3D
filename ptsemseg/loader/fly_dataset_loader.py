@@ -48,8 +48,8 @@ class flyDatasetLoader(data.Dataset):
         log('Loader: {}: img: {} label: {}'.format(index, img_path, lbl_path))
         img = loadtiff3d(img_path)
         lbl = loadtiff3d(lbl_path)
-        print('whole => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl),
-                                                                          np.min(lbl)))
+        # print('whole => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl),
+        #                                                                   np.min(lbl)))
         if self.augmentations is not None:
             img, lbl = self.augmentations(img, lbl)
 

@@ -4,6 +4,7 @@ model:
 #    save_folder: '/home/heng/Desktop/Research/isbi/fly-dataset/flyTaiwan/models'
 data:
     dataset: flyDataset
+    compound: True
     train_split: train
     val_split: val
     img_rows: 'same'
