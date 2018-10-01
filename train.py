@@ -18,7 +18,7 @@ def init_data_split(root, split_ratio, compound_dataset = False):
     meta_path = pjoin(root, 'meta.txt')
     img_paths = []
     with open(meta_path) as f:
-        lines = f.readlines()
+        lines = f.read().splitlines()
         for item in lines:
             if item.__contains__('.tif'):
                 #print(item[:-2])

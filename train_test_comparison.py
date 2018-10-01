@@ -70,7 +70,7 @@ for f in os.listdir(config_folder_path):
         runID = None
         id = cfg['id']
         with open(log_file) as log:
-            lines = log.readlines()
+            lines = log.read().splitlines()
             for item in lines:
                 if item.__contains__(':'):
                     if id == item.split(':')[0]:
@@ -84,7 +84,7 @@ for f in os.listdir(config_folder_path):
                         runID = model_path.split('/')[-2]
                         print('{}: 3. Testing...runID: {}'.format(counter, runID))
                         with open(pjoin(folder_path, 'meta.txt')) as meta:
-                            items = meta.readlines()
+                            items = meta.read().splitlines()
                             for item in items:
                                 if item.__contains__('.tif'):
                                     img_path = item
