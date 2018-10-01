@@ -516,4 +516,17 @@ def test_randint():
     x = randint(0, 100) if x == 1 else 0
     print(x)
 
-test_randint()
+# test_randint()
+
+def test_for():
+    with open('/home/heng/Desktop/Research/isbi/log.txt', 'a') as f:
+        f.writelines('a')
+        f.writelines('b')
+        f.writelines('c')
+# test_for()
+
+def test_meta(folder):
+    from ptsemseg.utils import dataset_meta
+    dataset_meta(folder)
+
+# test_meta('/home/heng/Desktop/Research/isbi/fly-dataset/utokyofly')

@@ -61,6 +61,34 @@ def writetiff3d(filepath, block):
         for z in range(block.shape[2]):
             saved_block = np.rot90(block[:, :, z])
             tif.save(saved_block.astype('uint8'), compress=0)
+
+
+def dataset_meta(folder):
+    from os.path import join as pjoin
+    from glob import glob
+    meta_file = pjoin(folder, 'meta.txt')
+    flag = 0
+    for filename in os.listdir(folder):
+        if filename == 'images':
+            print('images found!')
+            paths = glob(pjoin(folder, 'images') + '/*.tif')
+            with open(meta_file, 'a') as f:
+                for p in paths:
+                    f.write(p + '\n')
+            flag = 1
+    if not flag:
+        for filename in os.listdir(folder):
+            if filename.__contains__('fly'):
+                print('subset found!')
+                sub_dataset = pjoin(folder, filename)
+                sub_dataset_imgs = pjoin(sub_dataset, 'images')
+                sub_dataset_img_paths = glob(sub_dataset_imgs + '/*.tif')
+                with open(meta_file, 'a') as f:
+                    for p in sub_dataset_img_paths:
+                        f.write(p + '\n')
+
+
+
 '''
 Generate a file including all data's information (name; x; y; z)
 '''

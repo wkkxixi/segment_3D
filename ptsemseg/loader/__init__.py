@@ -31,7 +31,10 @@ def get_loader(name):
         # "vistas": mapillaryVistasLoader,
         "flyJanelia":flyJaneliaLoader,
         "flyJaneliaRegression":flyJaneliaRegLoader,
-        "flyDataset": flyDatasetLoader
+        "flyDataset": flyDatasetLoader,
+        "flyJanelia": flyDatasetLoader,
+        "flyTaiwan": flyDatasetLoader,
+        "janeliafly2": flyDatasetLoader
     }[name]
 
 

@@ -10,19 +10,22 @@ def display(string):
 '''
 split dataset into train and validation randomly by ratio
 '''
-def init_data_split(root, split_ratio):
+def init_data_split(root, split_ratio, compound_dataset = False):
     from glob import glob
     from random import shuffle
     from os.path import join as pjoin
     img_paths = []
-
-    for dir_name in os.listdir(root):
-        if dir_name.__contains__('fly'):
-            sub_dataset = pjoin(root, dir_name)
-            sub_dataset_imgs = pjoin(sub_dataset, 'images')
-            sub_dataset_img_paths = glob(sub_dataset_imgs + '/*.tif')
-            ratio = split_ratio
-            img_paths.extend([path.split('/')[-3] + '/' + path.split('/')[-1] for path in sub_dataset_img_paths])
+    compound_dataset = False
+    if compound_dataset:
+        for dir_name in os.listdir(root):
+            if dir_name.__contains__('fly'):
+                sub_dataset = pjoin(root, dir_name)
+                sub_dataset_imgs = pjoin(sub_dataset, 'images')
+                sub_dataset_img_paths = glob(sub_dataset_imgs + '/*.tif')
+                ratio = split_ratio
+                img_paths.extend([path.split('/')[-3] + '/' + path.split('/')[-1] for path in sub_dataset_img_paths])
+    else:
+        img_paths = glob(pjoin(root, 'images') + '/*.tif')
     shuffle(img_paths)
     val_paths = img_paths[:int(ratio*(len(img_paths)))]
     log('length of val_paths is: {}'.format(len(val_paths)))
@@ -85,7 +88,7 @@ import time
 
 def train(cfg, writer, logger):
     # Setup dataset split before setting up the seed for random
-    data_split_info = init_data_split(cfg['data']['path'], cfg['data'].get('split_ratio', 0))  # fly jenelia dataset
+    data_split_info = init_data_split(cfg['data']['path'], cfg['data'].get('split_ratio', 0), cfg['data'].get('compound', False))  # fly jenelia dataset
 
     # Setup seeds
     torch.manual_seed(cfg.get('seed', 1337))
@@ -117,7 +120,8 @@ def train(cfg, writer, logger):
         split=cfg['data']['train_split'],
         augmentations=data_aug,
         data_split_info=data_split_info,
-        patch_size=patch_size)
+        patch_size=patch_size,
+        allow_empty_patch = cfg['training'].get('allow_empty_patch', True))
 
     v_loader = data_loader(
         data_path,
@@ -310,11 +314,17 @@ def train(cfg, writer, logger):
                 "optimizer_state": optimizer.state_dict(),
                 "scheduler_state": scheduler.state_dict(),
             }
+
             save_path = os.path.join(writer.file_writer.get_logdir(),
                                      "{}_{}_model_{}.pkl".format(
                                          cfg['model']['arch'],
                                          cfg['data']['dataset'],
                                          model_count))
+            with open('/home/heng/Desktop/Research/isbi/log.txt', 'a') as f:
+                id = cfg['id']
+                f.writelines(str(id) + ':' + save_path)
+
+
             torch.save(state, save_path)
             model_count += 1
 

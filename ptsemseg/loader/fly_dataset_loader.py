@@ -22,7 +22,8 @@ class flyDatasetLoader(data.Dataset):
         split,
         augmentations=None,
         data_split_info=None,
-        patch_size=None
+        patch_size=None,
+        allow_empty_patch=True
     ):
         self.root = os.path.expanduser(root)
         self.n_classes = 1 # for regression
@@ -30,6 +31,7 @@ class flyDatasetLoader(data.Dataset):
         self.data_split_info = data_split_info
         self.patch_size = [512, 512, 512] if patch_size is None else patch_size
         self.split = split
+        self.allow_empty_patch = allow_empty_patch
 
         # self.nameList = self.getInfoLists()
         self.pathList = self.getInfoLists()
@@ -75,40 +77,27 @@ class flyDatasetLoader(data.Dataset):
         zoomx = max(shape[0], self.patch_size[0]) / shape[0]
         zoomy = max(shape[1], self.patch_size[1]) / shape[1]
         zoomz = max(shape[2], self.patch_size[2]) / shape[2]
-        # print('before zoom => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl),
-        #                                                                   np.min(lbl)))
+
         img = zoom(img, (zoomx, zoomy, zoomz))
         lbl = zoom(lbl, (zoomx, zoomy, zoomz))
-        # print('after zoom => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl),
-        #                                                                   np.min(lbl)))
+
         x = randint(0, shape[0] - self.patch_size[0]) if zoomx >= 1 else 0
         y = randint(0, shape[1] - self.patch_size[1]) if zoomy >= 1 else 0
         z = randint(0, shape[2] - self.patch_size[2]) if zoomz >= 1 else 0
         # print('x: {} y: {} z: {}'.format(x, y, z))
         img_patch = img[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
         lbl_patch = lbl[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
-        # print('lbl == 0 percentage: {}'.format(100*np.sum((lbl_patch == 0).astype('int'))/(self.patch_size[0]*self.patch_size[1]*self.patch_size[2])))
-        # print('img max {}, min {} | label max {}, min {}'.format(np.max(img_patch), np.min(img_patch), np.max(lbl_patch),
-        #                                                                   np.min(lbl_patch)))
-        while np.sum((lbl_patch == 0).astype('int'))/(self.patch_size[0]*self.patch_size[1]*self.patch_size[2]) > 0.99995:
-            x = randint(0, shape[0] - self.patch_size[0]) if zoomx >= 1 else 0
-            y = randint(0, shape[1] - self.patch_size[1]) if zoomy >= 1 else 0
-            z = randint(0, shape[2] - self.patch_size[2]) if zoomz >= 1 else 0
-            # print('x: {} y: {} z: {} zoomx: {} zoomy: {} zoomz: {}'.format(x, y, z, zoomx, zoomy, zoomz))
-            img_patch = img[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
-            lbl_patch = lbl[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
-            # print('sum img_patch: {}  sum lbl_patch: {}'.format(np.sum(img_patch), np.sum(lbl_patch)))
-            # print('lbl == 0 percentage: {}'.format(100 * np.sum((lbl_patch == 0).astype('int')) / (
-            #             self.patch_size[0] * self.patch_size[1] * self.patch_size[2])))
-            # print('img max {}, min {} | label max {}, min {}'.format(np.max(img_patch), np.min(img_patch),
-            #                                                          np.max(lbl_patch),
-            #                                                          np.min(lbl_patch)))
-        print('find nice patch!!!')
+        #
+        if not self.allow_empty_patch:
+            while np.sum((lbl_patch == 0).astype('int'))/(self.patch_size[0]*self.patch_size[1]*self.patch_size[2]) > 0.99995:
+                x = randint(0, shape[0] - self.patch_size[0]) if zoomx >= 1 else 0
+                y = randint(0, shape[1] - self.patch_size[1]) if zoomy >= 1 else 0
+                z = randint(0, shape[2] - self.patch_size[2]) if zoomz >= 1 else 0
+                img_patch = img[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
+                lbl_patch = lbl[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
 
-        # print('find_patch return  => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl),
-        #                                                                   np.min(lbl)))
-        # writetiff3d('/home/heng/Desktop/Research/isbi/fly-dataset/utokyofly/pred/1_img_patch.tif', img)
-        # writetiff3d('/home/heng/Desktop/Research/isbi/fly-dataset/utokyofly/pred/1_lbl_patch.tif', lbl)
+        # print('find nice patch!!!')
+
         return img_patch, lbl_patch/255
 
     # transform from numpy to tensor
