@@ -81,11 +81,11 @@ class flyDatasetLoader(data.Dataset):
 
         img = zoom(img, (zoomx, zoomy, zoomz))
         lbl = zoom(lbl, (zoomx, zoomy, zoomz))
-
-        x = randint(0, shape[0] - self.patch_size[0]) if zoomx >= 1 else 0
-        y = randint(0, shape[1] - self.patch_size[1]) if zoomy >= 1 else 0
-        z = randint(0, shape[2] - self.patch_size[2]) if zoomz >= 1 else 0
-        # print('x: {} y: {} z: {}'.format(x, y, z))
+        print('zoomx: {} zoomy: {} zoomz: {}'.format(zoomx, zoomy, zoomz))
+        x = randint(0, shape[0] - self.patch_size[0]) if zoomx == 1 else 0
+        y = randint(0, shape[1] - self.patch_size[1]) if zoomy == 1 else 0
+        z = randint(0, shape[2] - self.patch_size[2]) if zoomz == 1 else 0
+        print('x: {} y: {} z: {}'.format(x, y, z))
         img_patch = img[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
         lbl_patch = lbl[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
         #
