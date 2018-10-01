@@ -21,6 +21,8 @@ def init_data_split(root, split_ratio, compound_dataset = False):
         lines = f.readlines()
         for item in lines:
             if item.__contains__('.tif'):
+                #print(item[:-2])
+                #item = item.replace('\n','')
                 img_paths.append(item)
 
     # compound_dataset = False

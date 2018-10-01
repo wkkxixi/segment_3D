@@ -41,10 +41,10 @@ class flyDatasetLoader(data.Dataset):
         return len(self.pathList)
 
     def __getitem__(self, index):
-        img_dataset = self.pathList[index].split('/')[0]
-        img_name = self.pathList[index].split('/')[1]
-        img_path = self.root + '/' + img_dataset + '/' + 'images' + '/' + img_name
-        lbl_path = self.root + '/' + img_dataset + '/' + 'labels' + '/' + img_name
+        #img_dataset = self.pathList[index].split('/')[0]
+        #img_name = self.pathList[index].split('/')[1]
+        img_path = self.pathList[index]
+        lbl_path = img_path.replace('images', 'labels')
         log('Loader: {}: img: {} label: {}'.format(index, img_path, lbl_path))
         img = loadtiff3d(img_path)
         lbl = loadtiff3d(lbl_path)
@@ -65,6 +65,7 @@ class flyDatasetLoader(data.Dataset):
     def getInfoLists(self):
 
         if self.split == 'train':
+            #print(self.data_split_info['img_paths'])
             return [p for p in self.data_split_info['img_paths'] if p not in self.data_split_info['val_paths']]
         elif self.split == 'val':
             return self.data_split_info['val_paths']
