@@ -1,4 +1,4 @@
-DEBUG=False
+DEBUG=True
 def log(s):
     if DEBUG:
         print(s)
@@ -35,10 +35,12 @@ def imgToTensor(img, device):
 def decoder(tensor):
     # log('tensor before to pred img: {}'.format(tensor.size()))
     pred = tensor.data.cpu().numpy()
+    pred = pred[0][0]
+
     # log('pred img after to img: {}'.format(pred.shape))
-    ret = (pred[0][0]<pred[0][1]).astype('int')
+    # ret = (pred[0][0]<pred[0][1]).astype('int')
     # log('final return label map: {}'.format(ret.shape))
-    return ret
+    return pred
 
 
 
@@ -68,7 +70,7 @@ def test(args):
 
     # Setup Model
     log('set up model')
-    n_classes = 2
+    n_classes = 1
     log('model name: {}'.format(model_name))
     model = get_model(model_name, n_classes, version=args.dataset)
     state = convert_state_dict(torch.load(args.model_path)["model_state"])
@@ -91,24 +93,27 @@ def test(args):
         if x+160 > shapeX:
             overlapX = x - (shapeX - 160)
             x= shapeX - 160
-            log('overlapX: {}'.format(overlapX))
+            # log('overlapX: {}'.format(overlapX))
         y = 0
         while y < shapeY:
             # residual
             if y + 160 > shapeY:
                 overlapY = y - (shapeY - 160)
                 y = shapeY - 160
-                log('overlapY: {}'.format(overlapY))
+                # log('overlapY: {}'.format(overlapY))
             z = 0
             while z < shapeZ:
                 # residual check
                 if z+8 > shapeZ:
                     overlapZ = z - (shapeZ - 8)
                     z = shapeZ - 8
-                    log('overlapZ: {}'.format(overlapZ))
+                    # log('overlapZ: {}'.format(overlapZ))
                 patch = img[x:x+160, y:y+160, z:z+8]
                 patch = imgToTensor(patch, device)
+                # print('patch tensor size: {}'.format(patch.size()))
                 pred = model(patch)
+                # log('pred after model: shape {}'.format(pred.size()))
+                # print('pred shape: '.format(pred.size()))
                 pred = decoder(pred)
                 if overlapZ:
                     pred = pred[:,:,overlapZ:]
@@ -119,7 +124,7 @@ def test(args):
                         stack_alongZ = pred
                     else:
                         stack_alongZ = np.concatenate((stack_alongZ, pred), axis=2)
-                log('===>z ({}/{}) loop: stack_alongZ shape: {}'.format(z, shapeZ, stack_alongZ.shape))
+                # log('===>z ({}/{}) loop: stack_alongZ shape: {}'.format(z, shapeZ, stack_alongZ.shape))
 
                 z += 8
 
@@ -132,7 +137,7 @@ def test(args):
                     stack_alongY = stack_alongZ
                 else:
                     stack_alongY = np.concatenate((stack_alongY, stack_alongZ), axis=1)
-            log('==>y ({}/{}) loop: stack_alongY shape: {}'.format(y, shapeY, stack_alongY.shape))
+            # log('==>y ({}/{}) loop: stack_alongY shape: {}'.format(y, shapeY, stack_alongY.shape))
             stack_alongZ = None
 
             y += 160
@@ -146,7 +151,7 @@ def test(args):
                 stack_alongX = stack_alongY
             else:
                 stack_alongX = np.concatenate((stack_alongX, stack_alongY), axis=0)
-        log('=>x ({}/{}) loop: stack_alongX shape: {}'.format(x, shapeX, stack_alongX.shape))
+        # log('=>x ({}/{}) loop: stack_alongX shape: {}'.format(x, shapeX, stack_alongX.shape))
         stack_alongY = None
 
         x += 160
@@ -159,7 +164,22 @@ def test(args):
         print("Read Input Image from : {}".format(args.img_path))
         print('result shape is: {} but aimed shape is {}'.format(stack_alongX.shape,(oldeShapeX, oldeShapeY, oldeShapeZ)))
         exit(1)
-    writetiff3d(args.out_path, stack_alongX*255)
+
+    mask = (stack_alongX > 0).astype('int')
+    stack_alongX = np.multiply(mask, stack_alongX)
+    maxV = np.max(stack_alongX)
+    minV = np.min(stack_alongX)
+    stack_alongX = (stack_alongX - minV)/(maxV - minV)
+
+    # maxV = np.max(stack_alongX)
+    # minV = np.min(stack_alongX)
+    print('maximum: {} minimum: {}'.format(np.max(stack_alongX), np.min(stack_alongX)))
+    # maxV = np.max(stack_alongX)
+    # minV = np.min(stack_alongX)
+    # threshold = (maxV + 0)/8
+    # stack_alongX = (stack_alongX > threshold).astype('int')
+    writetiff3d(args.out_path, (stack_alongX*255))
+    # writetiff3d(args.out_path, stack_alongX*255 > 60)
 
 
 

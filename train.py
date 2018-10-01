@@ -200,12 +200,13 @@ def train(cfg, writer, logger):
             images = images.to(device)
             labels = labels.to(device)
 
-            mean = images[0]
+            # mean = images[0]
 
 
             optimizer.zero_grad()
             outputs = model(images)
             # log('TrainIter=> images.size():{} labels.size():{} | outputs.size():{}'.format(images.size(), labels.size(), outputs.size()))
+            # log('image max: {} min: {} | label max: {} min: {} | output max: {} min: {}'.format(torch.max(images), torch.min(images), torch.max(labels), torch.min(labels), torch.max(outputs), torch.min(outputs)))
             # loss = loss_fn(input=outputs, target=labels, weight=weight, size_average=cfg['training']['loss']['size_average'])
             loss = nn.L1Loss()
             loss = loss(outputs, labels)

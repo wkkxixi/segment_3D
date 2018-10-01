@@ -41,26 +41,19 @@ class flyDatasetLoader(data.Dataset):
     def __getitem__(self, index):
         img_dataset = self.pathList[index].split('/')[0]
         img_name = self.pathList[index].split('/')[1]
-        # img_path = pjoin(self.root, img_dataset, 'images', img_name) # too slow
-        img_path = self.root + '/' + img_dataset + '/' + 'images' + img_name
-        lbl_path = self.root + '/' + img_dataset + '/' + 'labels' + img_name
-        # lbl_path = pjoin(self.root, img_dataset, 'labels', img_name)
+        img_path = self.root + '/' + img_dataset + '/' + 'images' + '/' + img_name
+        lbl_path = self.root + '/' + img_dataset + '/' + 'labels' + '/' + img_name
         log('Loader: {}: img: {} label: {}'.format(index, img_path, lbl_path))
         img = loadtiff3d(img_path)
         lbl = loadtiff3d(lbl_path)
-        log('before augmentation: img shape: {}'.format(img.shape))
+        print('whole => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl),
+                                                                          np.min(lbl)))
         if self.augmentations is not None:
             img, lbl = self.augmentations(img, lbl)
-        log('after augmentation: img shape: {}'.format(img.shape))
-        # save augmentation
-        # new_folder_maker(pjoin(self.root, img_dataset, 'augmentation'))
-        # new_folder_maker(pjoin(self.root, img_dataset, 'augmentation_labels'))
-        # writetiff3d(pjoin(self.root, img_dataset, 'augmentation', img_name + '_augmentation.tif'), img)
-        # writetiff3d(pjoin(self.root, img_dataset, 'augmentation_labels', img_name + '_augmentation_label.tif'), lbl)
-        ###
-        img, lbl = self.find_patch(img, lbl)
-        log('after find_patch: img shape: {}; should be 160x160x8'.format(img.shape))
 
+        img, lbl = self.find_patch(img, lbl)
+
+        # print('patch => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl), np.min(lbl)))
 
         img, lbl = self.transform(img, lbl)
 
@@ -79,19 +72,44 @@ class flyDatasetLoader(data.Dataset):
     def find_patch(self, img, lbl):
 
         shape = img.shape
-        x = max(shape[0], self.patch_size[0]) / shape[0]
-        y = max(shape[1], self.patch_size[1]) / shape[1]
-        z = max(shape[2], self.patch_size[2]) / shape[2]
-        img = zoom(img, (x, y, z))
-        lbl = zoom(lbl, (x, y, z))
-        x = randint(0, shape[0] - self.patch_size[0]) if x == 1 else 0
-        y = randint(0, shape[1] - self.patch_size[1]) if y == 1 else 0
-        z = randint(0, shape[2] - self.patch_size[2]) if z == 1 else 0
+        zoomx = max(shape[0], self.patch_size[0]) / shape[0]
+        zoomy = max(shape[1], self.patch_size[1]) / shape[1]
+        zoomz = max(shape[2], self.patch_size[2]) / shape[2]
+        # print('before zoom => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl),
+        #                                                                   np.min(lbl)))
+        img = zoom(img, (zoomx, zoomy, zoomz))
+        lbl = zoom(lbl, (zoomx, zoomy, zoomz))
+        # print('after zoom => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl),
+        #                                                                   np.min(lbl)))
+        x = randint(0, shape[0] - self.patch_size[0]) if zoomx >= 1 else 0
+        y = randint(0, shape[1] - self.patch_size[1]) if zoomy >= 1 else 0
+        z = randint(0, shape[2] - self.patch_size[2]) if zoomz >= 1 else 0
+        # print('x: {} y: {} z: {}'.format(x, y, z))
+        img_patch = img[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
+        lbl_patch = lbl[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
+        # print('lbl == 0 percentage: {}'.format(100*np.sum((lbl_patch == 0).astype('int'))/(self.patch_size[0]*self.patch_size[1]*self.patch_size[2])))
+        # print('img max {}, min {} | label max {}, min {}'.format(np.max(img_patch), np.min(img_patch), np.max(lbl_patch),
+        #                                                                   np.min(lbl_patch)))
+        while np.sum((lbl_patch == 0).astype('int'))/(self.patch_size[0]*self.patch_size[1]*self.patch_size[2]) > 0.99995:
+            x = randint(0, shape[0] - self.patch_size[0]) if zoomx >= 1 else 0
+            y = randint(0, shape[1] - self.patch_size[1]) if zoomy >= 1 else 0
+            z = randint(0, shape[2] - self.patch_size[2]) if zoomz >= 1 else 0
+            # print('x: {} y: {} z: {} zoomx: {} zoomy: {} zoomz: {}'.format(x, y, z, zoomx, zoomy, zoomz))
+            img_patch = img[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
+            lbl_patch = lbl[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]].copy()
+            # print('sum img_patch: {}  sum lbl_patch: {}'.format(np.sum(img_patch), np.sum(lbl_patch)))
+            # print('lbl == 0 percentage: {}'.format(100 * np.sum((lbl_patch == 0).astype('int')) / (
+            #             self.patch_size[0] * self.patch_size[1] * self.patch_size[2])))
+            # print('img max {}, min {} | label max {}, min {}'.format(np.max(img_patch), np.min(img_patch),
+            #                                                          np.max(lbl_patch),
+            #                                                          np.min(lbl_patch)))
+        print('find nice patch!!!')
 
-        img = img[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]]
-        lbl = lbl[x:x + self.patch_size[0], y:y + self.patch_size[1], z:z + self.patch_size[2]]
-
-        return img, lbl
+        # print('find_patch return  => img max {}, min {} | label max {}, min {}'.format(np.max(img), np.min(img), np.max(lbl),
+        #                                                                   np.min(lbl)))
+        # writetiff3d('/home/heng/Desktop/Research/isbi/fly-dataset/utokyofly/pred/1_img_patch.tif', img)
+        # writetiff3d('/home/heng/Desktop/Research/isbi/fly-dataset/utokyofly/pred/1_lbl_patch.tif', lbl)
+        return img_patch, lbl_patch/255
 
     # transform from numpy to tensor
     def transform(self, img, lbl):
