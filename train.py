@@ -14,6 +14,7 @@ def init_data_split(root, split_ratio, compound_dataset = False):
     from glob import glob
     from random import shuffle
     from os.path import join as pjoin
+    ratio = split_ratio
     img_paths = []
     compound_dataset = False
     if compound_dataset:
