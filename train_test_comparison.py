@@ -20,7 +20,7 @@ def compare_with_gt(folderpath, runID):
     count = 0
     meta_file = pjoin(folder_path, 'meta.txt')
     with open(meta_file) as f:
-        lines = f.readlines()  # read every line
+        lines = f.read().splitlines()  # read every line
         for item in lines:
             if item.__contains__('.'):  # escape the first line and recognize the path
                 filename = item.split('/')[-1]
@@ -54,35 +54,38 @@ def compare_with_gt(folderpath, runID):
 
 config_folder_path = '/home/heng/Desktop/Research/0920/segment_3D/configs'
 log_file = '/home/heng/Desktop/Research/isbi/log.txt'
-counter = 0
+
 for f in os.listdir(config_folder_path):
     if fnmatch.fnmatch(f,'unet3d_regression_*.yml'):
         config_file_path = config_folder_path + '/' + f
-        print('{}: 1. Loading configuration => {}'.format(counter, config_file_path))
-
         with open(config_file_path) as fp:
             cfg = yaml.load(fp)
-        print('{}: 2. Training...'.format(counter))
+        id = cfg['id']
+        print('{}: 1. Loading configuration => {}'.format(id, config_file_path))
+
+
+        print('{}: 2. Training...'.format(id))
         train_cmd = 'python3 train.py --config ' + config_file_path
         os.system(train_cmd)
 
         folder_path = cfg['data']['path']
         runID = None
-        id = cfg['id']
+
+        print('configure file id: ' + str(id))
         with open(log_file) as log:
             lines = log.read().splitlines()
             for item in lines:
                 if item.__contains__(':'):
-                    if id == item.split(':')[0]:
-
+                    if id == int(item.split(':')[0]):
+                        print(item)
                         model_path = item.split(':')[-1]
                         model_number = model_path.split('_')[-1].split('.pkl')[0]
 
-                        if model_number != '4':
-                            print('{}: Check...model number: {} ignored'.format(counter, model_number))
+                        if int(model_number) != 4:
+                            print('{}: Check...model number: {} ignored'.format(id, model_number))
                             continue
                         runID = model_path.split('/')[-2]
-                        print('{}: 3. Testing...runID: {}'.format(counter, runID))
+                        print('{}: 3. Testing...runID: {}'.format(id, runID))
                         with open(pjoin(folder_path, 'meta.txt')) as meta:
                             items = meta.read().splitlines()
                             for item in items:
@@ -91,8 +94,8 @@ for f in os.listdir(config_folder_path):
                                     out_path = img_path.replace('images', 'pred_'+runID)
                                     test_cmd = 'python3 test.py  --img_path ' + img_path + ' --out_path ' + out_path + ' --model_path ' + model_path
                                     os.system(test_cmd)
-                        print('{}: 4. Comparing...'.format(counter))
+                        print('{}: 4. Comparing...'.format(id))
                         compare_with_gt(folder_path, runID)
 
-    counter += 1
+
 

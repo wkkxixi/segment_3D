@@ -180,8 +180,8 @@ def test(args):
     # stack_alongX = (stack_alongX > threshold).astype('int')
     out_path = args.out_path
     img_name = out_path.split('/')[-1]
-    pred_folder = out_path.split('.tif')[:-2]
-    if not os.path.isdir(os.path.join(os.getcwd(), pred_folder)):
+    pred_folder = out_path.replace(img_name, '')
+    if not os.path.isdir(pred_folder):
         os.mkdir(pred_folder)
     else:
         print(pred_folder + ' already exists')

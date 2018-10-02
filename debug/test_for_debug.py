@@ -539,4 +539,14 @@ def test_replace():
     b = b[:-2]
     print(a)
     print(b)
-test_replace()
+# test_replace()
+
+def test_isdir():
+    pred_folder = '/home/heng/Desktop/Research/isbi/fly-dataset/flyJanelia/pred_testtest22'
+    print(os.path.join(os.getcwd(), pred_folder))
+    print(os.getcwd())
+    if not os.path.isdir(pred_folder):
+        os.mkdir(pred_folder)
+    else:
+        print(pred_folder + ' already exists')
+test_isdir()
