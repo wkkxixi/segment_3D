@@ -52,11 +52,11 @@ def compare_with_gt(folderpath, runID):
 
 
 
-config_folder_path = '/home/heng/Desktop/Research/0920/segment_3D/configs'
-log_file = '/home/heng/Desktop/Research/isbi/log.txt'
+config_folder_path = '/home/heng/Research/segment_3D/configs'
+log_file = '/home/heng/Desktop/Research/isbi/log_res.txt'
 
 for f in os.listdir(config_folder_path):
-    if fnmatch.fnmatch(f,'unet3d_regression_*.yml'):
+    if fnmatch.fnmatch(f,'teacher_unet3d_regression_*.yml'):
         config_file_path = config_folder_path + '/' + f
         with open(config_file_path) as fp:
             cfg = yaml.load(fp)

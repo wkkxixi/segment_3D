@@ -10,7 +10,7 @@ data:
     img_rows: 'same'
     img_cols: 'same'
     #path: '/Users/wonh/Desktop/fly-dataset/' # for mac
-    path: '/home/heng/Desktop/Research/isbi/fly-dataset/flyJanelia2' # for ubuntu
+    path: '/home/heng/Research/isbi/fly-dataset/flyJanelia2' # for ubuntu
 training:
     train_iters: 5 #200
     batch_size: 2
