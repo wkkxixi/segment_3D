@@ -7,7 +7,7 @@ import torch.nn as nn
 from ptsemseg.models.utils import *
 
 
-class unet3dreg(nn.Module):
+class unet3dregTeacher(nn.Module):
     def __init__(
         self,
         feature_scale=4,
@@ -16,7 +16,7 @@ class unet3dreg(nn.Module):
         in_channels=1,
         is_batchnorm=True,
     ):
-        super(unet3dreg, self).__init__()
+        super(unet3dregTeacher, self).__init__()
         self.is_deconv = is_deconv
         self.in_channels = in_channels
         self.is_batchnorm = is_batchnorm
