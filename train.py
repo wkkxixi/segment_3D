@@ -334,7 +334,7 @@ def train(cfg, writer, logger):
                                          cfg['data']['dataset'],
                                          model_count))
             print('save_path is: ' + save_path)
-            with open('/home/heng/Research/isbi/log_res.txt', 'a') as f:
+            with open('/home/heng/Research/isbi/log_student.txt', 'a') as f:
                 id = cfg['id']
                 f.write(str(id) + ':' + save_path + '\n')
 
