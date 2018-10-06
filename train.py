@@ -14,8 +14,11 @@ def init_data_split(root, split_ratio, compound_dataset = False):
     from glob import glob
     from random import shuffle
     from os.path import join as pjoin
+    from ptsemseg.utils import dataset_meta
     ratio = split_ratio
+
     meta_path = pjoin(root, 'meta.txt')
+    dataset_meta(root)
     img_paths = []
     with open(meta_path) as f:
         lines = f.read().splitlines()
@@ -325,12 +328,13 @@ def train(cfg, writer, logger):
                 "scheduler_state": scheduler.state_dict(),
             }
 
-            save_path = os.path.join(writer.file_writer.get_logdir(),
+            save_path = os.path.join(os.getcwd(), writer.file_writer.get_logdir(),
                                      "{}_{}_model_{}.pkl".format(
                                          cfg['model']['arch'],
                                          cfg['data']['dataset'],
                                          model_count))
-            with open('/home/heng/Desktop/Research/isbi/log_res.txt', 'a') as f:
+            print('save_path is: ' + save_path)
+            with open('/home/heng/Research/isbi/log_res.txt', 'a') as f:
                 id = cfg['id']
                 f.write(str(id) + ':' + save_path + '\n')
 

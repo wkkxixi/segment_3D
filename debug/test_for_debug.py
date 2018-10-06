@@ -549,4 +549,18 @@ def test_isdir():
         os.mkdir(pred_folder)
     else:
         print(pred_folder + ' already exists')
-test_isdir()
+# test_isdir()
+
+def test_with_open():
+    with open('/home/heng/Research/isbi/log_test3.txt', 'w') as f:
+        pass
+# test_with_open()
+
+def test_add_to_txt():
+    with open('/home/heng/Research/isbi/log_test2.txt', 'a') as f:
+        f.write('a\n')
+# test_add_to_txt()
+
+def test_cwd():
+    print(os.getcwd())
+test_cwd()

@@ -1,6 +1,6 @@
 id: 4
 model:
-    arch: unet3dreg_teacher
+    arch: unet3dregTeacher #MODEL CLASS
 #    save_folder: '/home/heng/Desktop/Research/isbi/fly-dataset/flyTaiwan/models'
 data:
     dataset: flyDataset

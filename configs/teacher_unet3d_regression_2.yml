@@ -1,6 +1,6 @@
 id: 2
 model:
-    arch: unet3dreg_teacher
+    arch: unet3dregTeacher
 #    save_folder: '/home/heng/Desktop/Research/isbi/fly-dataset/janeliafly2/models'
 data:
     dataset: flyDataset

@@ -68,6 +68,8 @@ def dataset_meta(folder):
     from glob import glob
     meta_file = pjoin(folder, 'meta.txt')
     flag = 0
+    with open(meta_file, 'w') as f:
+        pass
     for filename in os.listdir(folder):
         if filename == 'images':
             print('images found!')

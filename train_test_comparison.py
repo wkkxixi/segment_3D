@@ -53,7 +53,7 @@ def compare_with_gt(folderpath, runID):
 
 
 config_folder_path = '/home/heng/Research/segment_3D/configs'
-log_file = '/home/heng/Desktop/Research/isbi/log_res.txt'
+log_file = '/home/heng/Research/isbi/log_res.txt'
 
 for f in os.listdir(config_folder_path):
     if fnmatch.fnmatch(f,'teacher_unet3d_regression_*.yml'):
@@ -63,10 +63,12 @@ for f in os.listdir(config_folder_path):
         id = cfg['id']
         print('{}: 1. Loading configuration => {}'.format(id, config_file_path))
 
-
-        print('{}: 2. Training...'.format(id))
-        train_cmd = 'python3 train.py --config ' + config_file_path
-        os.system(train_cmd)
+        if id == 4:
+            pass
+        else:
+            print('{}: 2. Training...'.format(id))
+            train_cmd = 'python3 train.py --config ' + config_file_path
+            os.system(train_cmd)
 
         folder_path = cfg['data']['path']
         runID = None

@@ -78,7 +78,7 @@ def _get_model_instance(name):
             "fcn3dnet" : fcn3dnet,
             "unet3d": unet3d,
             "unet3dreg": unet3dreg,
-            "unet3dreg_teacher": unet3dregTeacher
+            "unet3dregTeacher": unet3dregTeacher
 
         }[name]
     except:
