@@ -563,4 +563,59 @@ def test_add_to_txt():
 
 def test_cwd():
     print(os.getcwd())
-test_cwd()
+# test_cwd()
+
+def test_load_model(model_path):
+    teacher_model = torch.load(model_path)
+    # pre_trained_model = torch.load("Path to the .pth file")
+    model_state = teacher_model['model_state'] # state dict
+    # print(len(model_state))
+    student_model = torch.load('/home/heng/Research/segment_3D/runs/student_unet3d_regression_4/65046/unet3dregStudent_flyDataset_model_4.pkl')
+    student_model_state = student_model['model_state']
+    # for name, param in model_state.items():
+    #     print(name)
+    #     if name not in student_model_state:
+    #         continue
+    #     if isinstance(param, Parameter):
+    #         # backwards compatibility for serialized parameters
+    #         param = param.data
+    #     own_state[name].copy_(param)
+
+    pretrained_dict = teacher_model['model_state']
+    model_dict = student_model_state
+
+    # 1. filter out unnecessary keys
+    pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+    # 2. overwrite entries in the existing state dict
+    model_dict.update(pretrained_dict)
+    # 3. load the new state dict
+    state = {
+        "epoch": 100,
+        "model_state": model_dict,
+        "optimizer_state": student_model['optimizer_state'],
+        "scheduler_state": student_model['scheduler_state']
+    }
+
+    # torch.save(state, '/home/heng/Research/isbi/test.pkl')
+
+    updated_student_model = torch.load('/home/heng/Research/isbi/test.pkl')
+    updated_model_state = updated_student_model['model_state']
+    print(len(updated_model_state))
+    for name, param in updated_model_state.items():
+        print(name)
+    # model.load_state_dict(pretrained_dict)
+    # print(len(new))
+    # print(len(new[1][1]))
+    # print(new[1][0])
+    # print(new[1]) #state dict
+    # print(teacher_model.fc2.weight.data)
+    # for n in new:
+    #     print(n)
+    # my_model_kvpair = mymodel.state_dict():
+    # count = 0
+    # for key, value in my_model_kvpair.item():
+    #     layer_name, weights = new[count]
+    #     mymodel_kvpair[key] = weights
+    #     count += 1
+test_load_model('/home/heng/Research/segment_3D/runs/teacher_unet3d_regression_4/89050/unet3dregTeacher_flyDataset_model_4.pkl')
+# test_load_model('/home/heng/Research/segment_3D/runs/student_unet3d_regression_4/65046/unet3dregStudent_flyDataset_model_4.pkl')
