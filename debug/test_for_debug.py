@@ -565,57 +565,61 @@ def test_cwd():
     print(os.getcwd())
 # test_cwd()
 
+def test_dictionary():
+    a = {'dict':{'a':1, 'b':2, 'c':3}}
+    a_dict = a['dict']
+    print(a_dict)
+    b = {'a':99}
+    a_dict.update(b)
+    print(a_dict)
+    print(a)
+# test_dictionary()
+
+
+
 def test_load_model(model_path):
     teacher_model = torch.load(model_path)
-    # pre_trained_model = torch.load("Path to the .pth file")
-    model_state = teacher_model['model_state'] # state dict
-    # print(len(model_state))
+    # # pre_trained_model = torch.load("Path to the .pth file")
+    # # print(len(model_state))
     student_model = torch.load('/home/heng/Research/segment_3D/runs/student_unet3d_regression_4/65046/unet3dregStudent_flyDataset_model_4.pkl')
     student_model_state = student_model['model_state']
-    # for name, param in model_state.items():
-    #     print(name)
-    #     if name not in student_model_state:
-    #         continue
-    #     if isinstance(param, Parameter):
-    #         # backwards compatibility for serialized parameters
-    #         param = param.data
-    #     own_state[name].copy_(param)
+    a = student_model_state.copy()
+    teacher_model_state = teacher_model['model_state']
+    print('teacher: {} student: {}'.format(len(teacher_model_state), len(student_model_state)))
 
-    pretrained_dict = teacher_model['model_state']
-    model_dict = student_model_state
 
-    # 1. filter out unnecessary keys
-    pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+    pretrained_dict = {k: v for k, v in teacher_model_state.items() if k in student_model_state}
     # 2. overwrite entries in the existing state dict
-    model_dict.update(pretrained_dict)
+    student_model_state.update(pretrained_dict)
+    b = student_model_state
+    # shared_items = {k: x[k] for k in x if k in y and torch.equal(x[k], z[k])}
+
+    # print(len(shared_items))
     # 3. load the new state dict
     state = {
         "epoch": 100,
-        "model_state": model_dict,
+        "model_state": student_model_state,
         "optimizer_state": student_model['optimizer_state'],
         "scheduler_state": student_model['scheduler_state']
     }
 
-    # torch.save(state, '/home/heng/Research/isbi/test.pkl')
+    torch.save(state, '/home/heng/Research/isbi/test.pkl')
 
     updated_student_model = torch.load('/home/heng/Research/isbi/test.pkl')
     updated_model_state = updated_student_model['model_state']
     print(len(updated_model_state))
-    for name, param in updated_model_state.items():
-        print(name)
-    # model.load_state_dict(pretrained_dict)
-    # print(len(new))
-    # print(len(new[1][1]))
-    # print(new[1][0])
-    # print(new[1]) #state dict
-    # print(teacher_model.fc2.weight.data)
-    # for n in new:
-    #     print(n)
-    # my_model_kvpair = mymodel.state_dict():
-    # count = 0
-    # for key, value in my_model_kvpair.item():
-    #     layer_name, weights = new[count]
-    #     mymodel_kvpair[key] = weights
-    #     count += 1
+    print(len(pretrained_dict))
+    # for name, param in updated_model_state.items():
+        # print(name + ': ' + str(param.type()))
+    x = updated_model_state
+    y = pretrained_dict
+    z = a
+    shared_items = {k: x[k] for k in x if k in y and torch.equal(x[k], y[k])}
+
+    print(len(shared_items))
+    shared_items = {k: x[k] for k in x if k in z and torch.equal(x[k], z[k])}
+
+    print(len(shared_items))
+
 test_load_model('/home/heng/Research/segment_3D/runs/teacher_unet3d_regression_4/89050/unet3dregTeacher_flyDataset_model_4.pkl')
 # test_load_model('/home/heng/Research/segment_3D/runs/student_unet3d_regression_4/65046/unet3dregStudent_flyDataset_model_4.pkl')

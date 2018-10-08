@@ -53,10 +53,10 @@ def compare_with_gt(folderpath, runID):
 
 
 config_folder_path = '/home/heng/Research/segment_3D/configs'
-log_file = '/home/heng/Research/isbi/log_student.txt'   # to change!!!!!
+log_file = '/home/heng/Research/isbi/log_smart_student_ensure.txt'   # to change!!!!!
 
 for f in os.listdir(config_folder_path):
-    if fnmatch.fnmatch(f,'student_unet3d_regression_4.yml'): # to change!!!!!!
+    if fnmatch.fnmatch(f,'smartstudent_unet3d_regression_1.yml'): # to change!!!!!!
         config_file_path = config_folder_path + '/' + f
         with open(config_file_path) as fp:
             cfg = yaml.load(fp)

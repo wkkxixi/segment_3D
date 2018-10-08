@@ -1,4 +1,4 @@
-DEBUG=True
+DEBUG=False
 def log(s):
     if DEBUG:
         print(s)
@@ -160,7 +160,23 @@ def train(cfg, writer, logger):
     # Setup Model
     model = get_model(cfg['model'], n_classes).to(device)
 
+
+
+
+
     model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
+    if cfg['training'].get('pretrained_model', None) is not None:
+        log('Load pretrained model: {}'.format(cfg['training'].get('pretrained_model', None)))
+        pretrainedModel = torch.load(cfg['training'].get('pretrained_model', None))
+        my_dict = model.state_dict()
+        x = my_dict.copy()
+        pretrained_dict = pretrainedModel['model_state']
+        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in my_dict}
+        my_dict.update(pretrained_dict)
+        y = my_dict.copy()
+        shared_items = {k: x[k] for k in x if k in y and torch.equal(x[k], y[k])}
+        if len(shared_items) == len(my_dict):
+            exit(1)
 
     # Setup optimizer, lr_scheduler and loss function
     optimizer_cls = get_optimizer(cfg)
@@ -334,7 +350,7 @@ def train(cfg, writer, logger):
                                          cfg['data']['dataset'],
                                          model_count))
             print('save_path is: ' + save_path)
-            with open('/home/heng/Research/isbi/log_student.txt', 'a') as f:
+            with open('/home/heng/Research/isbi/log_smart_student_ensure.txt', 'a') as f: # to change!!!!!
                 id = cfg['id']
                 f.write(str(id) + ':' + save_path + '\n')
 
