@@ -301,18 +301,15 @@ class fcn3dnetv2(nn.Module):
         self.pad1 = nn.Conv3d(in_channels = 192, out_channels=192, kernel_size=2, padding=(3,3,2))
 
         # deconvolution 2x
-        self.deconv1 = nn.Sequential(nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=2, stride=2))
+        self.deconv1 = nn.ConvTranspose3d(in_channels=192, out_channels=2, kernel_size=2, stride=2)
 
         # inceptionA
         # self.block2 = inceptionA(conv_in_channels=192)
         self.block2 = inceptionA(conv_in_channels=192)
 
-        self.pad2 = nn.Conv3d(in_channels=384, out_channels=384, kernel_size=2, output_padding=(2,2,1))
+        self.pad2 = nn.Conv3d(in_channels=384, out_channels=384, kernel_size=(2,2,1), padding=(1,1,0))
         # deconvolution 4x
-        self.deconv2 = nn.Sequential(nn.ConvTranspose3d(in_channels=384, out_channels=192, kernel_size=(3,3,1), stride=2,
-                                          output_padding=0),
-                                     nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
-                                     nn.ConvTranspose3d(in_channels=96, out_channels=2, kernel_size=(6, 6, 2)))
+        self.deconv2 = nn.ConvTranspose3d(in_channels=384, out_channels=2, kernel_size=4, stride=4)
 
         # reductionA
         self.block3 = reductionA(conv_in_channels=384)
@@ -320,13 +317,9 @@ class fcn3dnetv2(nn.Module):
         # inceptionB
         self.block4 = inceptionB(conv_in_channels=896)
 
+        self.pad3 = nn.Conv3d(in_channels=896, out_channels=896,  kernel_size=(2,2,1), padding=(1,1,0))
         # deconvolution 8x
-        self.deconv3 = nn.Sequential(
-            nn.ConvTranspose3d(in_channels=896, out_channels=384, kernel_size=(3, 3, 1), stride=2),
-            nn.ConvTranspose3d(in_channels=384, out_channels=192, kernel_size=(3, 3, 1), stride=2,
-                               output_padding=0),
-            nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
-            nn.ConvTranspose3d(in_channels=96, out_channels=2, kernel_size=(6, 6, 2)))
+        self.deconv3 = nn.ConvTranspose3d(in_channels=896, out_channels=2, kernel_size=8, stride=8)
 
         # reductionB
         self.block5 = reductionB(conv_in_channels=896)
@@ -334,15 +327,9 @@ class fcn3dnetv2(nn.Module):
         # inceptionC
         self.block6 = inceptionC(conv_in_channels=2048)
 
-        # deconvolution 8x
-        self.deconv4 = nn.Sequential(nn.ConvTranspose3d(in_channels=2048, out_channels=896, kernel_size=(3, 3, 1), stride=2, output_padding=(1,1,0)),
-                                     nn.ConvTranspose3d(in_channels=896, out_channels=384, kernel_size=(3, 3, 1),
-                                                        stride=2),
-                                     nn.ConvTranspose3d(in_channels=384, out_channels=192, kernel_size=(3, 3, 1),
-                                                        stride=2,
-                                                        output_padding=0),
-                                     nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
-                                     nn.ConvTranspose3d(in_channels=96, out_channels=2, kernel_size=(6, 6, 2)))
+        self.pad4 = nn.Conv3d(in_channels=2048, out_channels=2048,  kernel_size=(2,2,1), padding=(1,1,0))
+        # deconvolution 16x
+        self.deconv4 = nn.ConvTranspose3d(in_channels=2048, out_channels=2, kernel_size=(16,16,8), stride=(16,16,8))
 
 
         #todo
@@ -351,22 +338,30 @@ class fcn3dnetv2(nn.Module):
         log('The input size is: ' + str(x.size()))
         out = self.block1(x)
         log('The size after stem: ' + str(out.size()))
+        out = self.pad1(out)
+        log('The size after pad1: ' + str(out.size()))
         out_deconv1 = self.deconv1(out)
         log('The size after deconv1: ' + str(out_deconv1.size()))
         out = self.block2(out)
         log('The size after inceptionA: ' + str(out.size()))
+        out = self.pad2(out)
+        log('The size after pad2: ' + str(out.size()))
         out_deconv2 = self.deconv2(out)
         log('The size after deconv2: ' + str(out_deconv2.size()))
         out = self.block3(out)
         log('The size after reductionA: ' + str(out.size()))
         out = self.block4(out)
         log('The size after inceptionB: ' + str(out.size()))
+        out = self.pad3(out)
+        log('The size after pad3: ' + str(out.size()))
         out_deconv3 = self.deconv3(out)
         log('The size after deconv3: ' + str(out_deconv3.size()))
         out = self.block5(out)
         log('The size after reductionB: ' + str(out.size()))
         out = self.block6(out)
         log('The size after inceptionC: ' + str(out.size()))
+        out = self.pad4(out)
+        log('The size after pad4: ' + str(out.size()))
         out_deconv4 = self.deconv4(out)
         log('The size after deconv4: ' + str(out_deconv4.size()))
 

@@ -9,10 +9,23 @@ from ptsemseg.models.unet3dregStudent import *
 from ptsemseg.models.unet3dregSmartStudent import *
 from ptsemseg.models.unet3dregSmartStudentRes import *
 from ptsemseg.models.fcn3dnet import *
+from ptsemseg.models.fcn3dnetv2 import *
 
 def fcn3dnetDebug():
 
     fcn3dnet_model = fcn3dnet(n_classes=2)
+    # fcn3dnet_model
+
+    fake_im_num = 1
+    numpy_fake_image = np.random.rand(fake_im_num, 1, 160, 160, 8)
+    tensor_fake_image = torch.FloatTensor(numpy_fake_image)
+    print(tensor_fake_image.size())
+    torch_fake_image = Variable(tensor_fake_image)
+    output = fcn3dnet_model(torch_fake_image)
+
+def fcn3dnetv2Debug():
+
+    fcn3dnet_model = fcn3dnetv2(n_classes=2)
     # fcn3dnet_model
 
     fake_im_num = 1
@@ -92,4 +105,5 @@ def unet3dregSmartStudentResDebug():
 # unet3dregTeacherDebug()
 # unet3dregStudentDebug()
 # unet3dregSmartStudentResDebug()
-fcn3dnetDebug()
+# fcn3dnetDebug()
+fcn3dnetv2Debug()
