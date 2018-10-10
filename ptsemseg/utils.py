@@ -158,6 +158,7 @@ def swc2tif(filepath, tif_filepath, output_path):
         y = swc[row][3]
         z = swc[row][4]
         # r = swc[row][-2]
+        # r += 3
         r = 1  # all radius set to 1
         p = swc[row][-1]
         output[int(max(0, x-r)):int(min(x_shape, x+r)), int(max(0, y-r)):int(min(y_shape, y+r)), int(max(0, z-r)):int(min(z_shape, z+r))] = 255

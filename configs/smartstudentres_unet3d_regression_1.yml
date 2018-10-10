@@ -1,6 +1,6 @@
 id: 1
 model:
-    arch: unet3dregSmartStudent
+    arch: unet3dregSmartStudentRes
 
 #    save_folder: '/home/heng/Desktop/Research/isbi/fly-dataset/flyJanelia/models'
 data:
@@ -17,7 +17,7 @@ training:
     fed_by_teacher: True
     fed_by_intermediate: False
 #    pretrained_model:
-    train_iters: 20 #200
+    train_iters: 5 #20 #200
     batch_size: 2
     patch_size:
         x: 160

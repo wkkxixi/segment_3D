@@ -291,21 +291,23 @@ class inceptionC(nn.Module):
 
         return out
 
-class fcn3dnet(nn.Module):
+class fcn3dnetv2(nn.Module):
     def __init__(self, n_classes=2):
-        super(fcn3dnet, self).__init__()
+        super(fcn3dnetv2, self).__init__()
 
         # stem
         self.block1 = stem(conv_in_channels=1)
 
+        self.pad1 = nn.Conv3d(in_channels = 192, out_channels=192, kernel_size=2, padding=(3,3,2))
+
         # deconvolution 2x
-        self.deconv1 = nn.Sequential(nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=7, stride=2),
-                                     nn.ConvTranspose3d(in_channels=96, out_channels=2, kernel_size=(6,6,2)))
+        self.deconv1 = nn.Sequential(nn.ConvTranspose3d(in_channels=192, out_channels=96, kernel_size=2, stride=2))
 
         # inceptionA
         # self.block2 = inceptionA(conv_in_channels=192)
         self.block2 = inceptionA(conv_in_channels=192)
 
+        self.pad2 = nn.Conv3d(in_channels=384, out_channels=384, kernel_size=2, output_padding=(2,2,1))
         # deconvolution 4x
         self.deconv2 = nn.Sequential(nn.ConvTranspose3d(in_channels=384, out_channels=192, kernel_size=(3,3,1), stride=2,
                                           output_padding=0),

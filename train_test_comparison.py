@@ -53,10 +53,10 @@ def compare_with_gt(folderpath, runID):
 
 
 config_folder_path = '/home/heng/Research/segment_3D/configs'
-log_file = '/home/heng/Research/isbi/log_smart_student_ensure.txt'   # to change!!!!!
+log_file = '/home/heng/Research/isbi/log_smart_student_res_withTeacher.txt'   # to change!!!!!
 
 for f in os.listdir(config_folder_path):
-    if fnmatch.fnmatch(f,'smartstudent_unet3d_regression_1.yml'): # to change!!!!!!
+    if fnmatch.fnmatch(f,'smartstudentres_unet3d_regression_6.yml'): # to change!!!!!!
         config_file_path = config_folder_path + '/' + f
         with open(config_file_path) as fp:
             cfg = yaml.load(fp)
@@ -70,7 +70,7 @@ for f in os.listdir(config_folder_path):
         #     train_cmd = 'python3 train.py --config ' + config_file_path
         #     os.system(train_cmd)
 
-        print('{}: 2. Training...'.format(id))
+        # print('{}: 2. Training...'.format(id))
         train_cmd = 'python3 train.py --config ' + config_file_path
         os.system(train_cmd)
 
@@ -87,7 +87,7 @@ for f in os.listdir(config_folder_path):
                         model_path = item.split(':')[-1]
                         model_number = model_path.split('_')[-1].split('.pkl')[0]
 
-                        if int(model_number) != 4:
+                        if int(model_number) != 4: # to change!!!!!
                             print('{}: Check...model number: {} ignored'.format(id, model_number))
                             continue
                         runID = model_path.split('/')[-2]

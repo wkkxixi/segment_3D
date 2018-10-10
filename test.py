@@ -112,6 +112,7 @@ def test(args):
                 patch = imgToTensor(patch, device)
                 # print('patch tensor size: {}'.format(patch.size()))
                 pred = model(patch)
+                pred = pred[0]
                 # log('pred after model: shape {}'.format(pred.size()))
                 # print('pred shape: '.format(pred.size()))
                 pred = decoder(pred)

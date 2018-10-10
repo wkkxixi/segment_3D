@@ -27,18 +27,6 @@ def init_data_split(root, split_ratio, compound_dataset = False):
                 #print(item[:-2])
                 #item = item.replace('\n','')
                 img_paths.append(item)
-
-    # compound_dataset = False
-    # if compound_dataset:
-    #     for dir_name in os.listdir(root):
-    #         if dir_name.__contains__('fly'):
-    #             sub_dataset = pjoin(root, dir_name)
-    #             sub_dataset_imgs = pjoin(sub_dataset, 'images')
-    #             sub_dataset_img_paths = glob(sub_dataset_imgs + '/*.tif')
-    #             ratio = split_ratio
-    #             img_paths.extend([path.split('/')[-3] + '/' + path.split('/')[-1] for path in sub_dataset_img_paths])
-    # else:
-    #     img_paths = glob(pjoin(root, 'images') + '/*.tif')
     shuffle(img_paths)
     val_paths = img_paths[:int(ratio*(len(img_paths)))]
     log('length of val_paths is: {}'.format(len(val_paths)))
@@ -82,7 +70,7 @@ import torch.nn as nn
 from tensorboardX import SummaryWriter
 import shutil
 
-
+import torch.autograd as autograd
 from torch.utils import data
 from tqdm import tqdm
 
@@ -94,6 +82,7 @@ from ptsemseg.augmentations import *
 from ptsemseg.schedulers import get_scheduler
 from ptsemseg.optimizers import get_optimizer
 from ptsemseg.utils import get_logger
+from ptsemseg.utils import convert_state_dict
 # from torchvision.utils import make_grid
 import random
 import time
@@ -171,6 +160,7 @@ def train(cfg, writer, logger):
         my_dict = model.state_dict()
         x = my_dict.copy()
         pretrained_dict = pretrainedModel['model_state']
+
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in my_dict}
         my_dict.update(pretrained_dict)
         y = my_dict.copy()
@@ -237,13 +227,46 @@ def train(cfg, writer, logger):
 
 
             optimizer.zero_grad()
-            outputs = model(images)
-            # log('TrainIter=> images.size():{} labels.size():{} | outputs.size():{}'.format(images.size(), labels.size(), outputs.size()))
-            # log('image max: {} min: {} | label max: {} min: {} | output max: {} min: {}'.format(torch.max(images), torch.min(images), torch.max(labels), torch.min(labels), torch.max(outputs), torch.min(outputs)))
-            # loss = loss_fn(input=outputs, target=labels, weight=weight, size_average=cfg['training']['loss']['size_average'])
-            loss = nn.L1Loss()
-            loss = loss(outputs, labels)
+            outputs, myconv1_copy, myconv3_copy, myup2_copy, myup1_copy = model(images)
 
+            loss = nn.L1Loss()
+            hard_loss = loss(outputs, labels)
+            soft_loss = -1
+            mediate_average_loss = -1
+            if cfg['training'].get('fed_by_teacher', False):
+                # Setup Teacher Model
+                model_file_name = cfg['training'].get('pretrained_model', None)
+                model_name = {'arch': model_file_name.split('/')[-1].split('_')[0]}
+                teacher_model = get_model(model_name, n_classes)
+                pretrainedModel = torch.load(cfg['training'].get('pretrained_model', None))
+                teacher_state = convert_state_dict(
+                    pretrainedModel["model_state"])  # maybe in this way it can take multiple images???
+                teacher_model.load_state_dict(teacher_state)
+                teacher_model.eval()
+                teacher_model.to(device)
+                outputs_teacher, conv1_copy, conv3_copy, up2_copy, up1_copy = teacher_model(images)
+                outputs_teacher = autograd.Variable(outputs_teacher, requires_grad=False)
+                conv1_copy = autograd.Variable(conv1_copy, requires_grad=False)
+                conv3_copy = autograd.Variable(conv3_copy, requires_grad=False)
+                up2_copy = autograd.Variable(up2_copy, requires_grad=False)
+                up1_copy = autograd.Variable(up1_copy, requires_grad=False)
+                soft_loss = loss(outputs, outputs_teacher)
+                loss_hard_soft = 0.8 * hard_loss + 0.1 * soft_loss
+                if cfg['training'].get('fed_by_intermediate', False):
+                    mediate1_loss = loss(myconv1_copy, conv1_copy)
+                    mediate2_loss = loss(myconv3_copy, conv3_copy)
+                    mediate3_loss = loss(myup2_copy, up2_copy)
+                    mediate4_loss = loss(myup1_copy, up1_copy)
+                    mediate_average_loss = (mediate1_loss + mediate2_loss + mediate3_loss + mediate4_loss)/4
+                    log('mediate1_loss: {}, mediate2_loss: {}, mediate3_loss: {}, mediate4_loss: {}'.format(mediate1_loss, mediate2_loss, mediate3_loss, mediate4_loss))
+                    loss = loss_hard_soft + 0.1*mediate_average_loss
+                else:
+                    loss = hard_loss + soft_loss
+            else:
+                loss = hard_loss
+
+
+            log('==> hard loss: {} soft loss: {} mediate loss: {}'.format(hard_loss, soft_loss, mediate_average_loss))
             loss.backward()
             optimizer.step()
 
@@ -261,9 +284,7 @@ def train(cfg, writer, logger):
                 time_meter.reset()
             i_batch_idx += 1
         time_for_one_iteration = time.time() - train_iter_start_time
-        # time_converter(time_for_one_iteration)
-        # display('EntireTime for {}th training iteration: {:.4f}   EntireTime/Image: {:.4f}'.format(i_train_iter + 1,
-        #                           time_for_one_iteration, time_for_one_iteration / (len(trainloader)*cfg['training']['batch_size'])))
+
         display('EntireTime for {}th training iteration: {}  EntireTime/Image: {}'.format(i_train_iter+1, time_converter(time_for_one_iteration),
                                                                                           time_converter(time_for_one_iteration/(len(trainloader)*cfg['training']['batch_size']))))
 
@@ -273,51 +294,6 @@ def train(cfg, writer, logger):
         if not validation_check:
             print('no validation check')
         else:
-            # model.eval()
-            # with torch.no_grad():
-            #     log('start tqdm...')
-            #     # for i_val, (images_val, labels_val) in tqdm(enumerate(valloader)):
-            #     i_val = 0
-            #     # for i_val, (images_val, labels_val) in enumerate(valloader):
-            #     for (images_val, labels_val) in valloader:
-            #
-            #         log('i_val: {} => inside for loop'.format(i_val))
-            #         images_val = images_val.to(device)
-            #         labels_val = labels_val.to(device)
-            #
-            #         outputs = model(images_val)
-            #         log('ValIter=> images_val.size():{} labels_val.size():{} | outputs.size():{}'.format(
-            #             images_val.size(),
-            #             labels_val.size(),
-            #             outputs.size()))
-            #         val_loss = loss_fn(input=outputs, target=labels, weight=weight, size_average=cfg['training']['loss']['size_average'])
-            #
-            #         # pred = outputs.data.max(1)[1].cpu().numpy() # for classes 2
-            #         pred = outputs.data.cpu().numpy()
-            #         gt = labels_val.data.cpu().numpy()
-            #         log('validation: gt shape: {}  pred shape: {}'.format(gt.shape, pred.shape))
-            #         running_metrics_val.update(gt, pred)
-            #         val_loss_meter.update(val_loss.item())
-            #         i_val += 1
-            #     log('outside for loop tqdm')
-            # writer.add_scalar('loss/val_loss', val_loss_meter.avg, i_train_iter + 1)
-            # logger.info("Iter %d Loss: %.4f" % (i_train_iter + 1, val_loss_meter.avg))
-            # log('get score...')
-            # '''
-            # This CODE-BLOCK is used to calculate and update the evaluation matrcs
-            # '''
-            # score, class_iou = running_metrics_val.get_scores()
-            # for k, v in score.items():
-            #     print(k, v)
-            #     logger.info('{}: {}'.format(k, v))
-            #     writer.add_scalar('val_metrics/{}'.format(k), v, i_train_iter + 1)
-            #
-            # for k, v in class_iou.items():
-            #     logger.info('{}: {}'.format(k, v))
-            #     writer.add_scalar('val_metrics/cls_{}'.format(k), v, i_train_iter + 1)
-            #
-            # val_loss_meter.reset()
-            # running_metrics_val.reset()
 
             '''
             This IF-CHECK is used to update the best model
@@ -350,9 +326,10 @@ def train(cfg, writer, logger):
                                          cfg['data']['dataset'],
                                          model_count))
             print('save_path is: ' + save_path)
-            with open('/home/heng/Research/isbi/log_smart_student_ensure.txt', 'a') as f: # to change!!!!!
+            with open('/home/heng/Research/isbi/log_smart_student_res_withTeacher.txt', 'a') as f: # to change!!!!!
                 id = cfg['id']
                 f.write(str(id) + ':' + save_path + '\n')
+
 
 
             torch.save(state, save_path)

@@ -621,5 +621,63 @@ def test_load_model(model_path):
 
     print(len(shared_items))
 
-test_load_model('/home/heng/Research/segment_3D/runs/teacher_unet3d_regression_4/89050/unet3dregTeacher_flyDataset_model_4.pkl')
+# test_load_model('/home/heng/Research/segment_3D/runs/teacher_unet3d_regression_4/89050/unet3dregTeacher_flyDataset_model_4.pkl')
 # test_load_model('/home/heng/Research/segment_3D/runs/student_unet3d_regression_4/65046/unet3dregStudent_flyDataset_model_4.pkl')
+def abcd():
+    a = 1
+    b = 2
+    c = 3
+    return a, b, c
+
+def test_return_multiple_value():
+    a = abcd()
+    a = a[0]
+    print(a)
+# test_return_multiple_value()
+
+def drawplot(xpoints, ypoints):
+    import matplotlib.pyplot as plt
+    # plotting the line 1 points
+    plt.plot(xpoints, ypoints, label="line 1")
+
+    # naming the x axis
+    plt.xlabel('Recall - axis')
+    # naming the y axis
+    plt.ylabel('Precision - axis')
+    # giving a title to my graph
+    plt.title('Precision-recall for different threshold')
+
+    # show a legend on the plot
+    plt.legend()
+
+    # function to show the plot
+    plt.show()
+
+def test_vstack():
+    a = np.array([1, 2, 3])
+    b = np.array([2, 3, 4])
+    c = np.vstack((a, b))
+    print('a shape: {} c shape: {}'.format(a.shape, c.shape))
+    d = np.mean(c, axis=0)
+    print(d)
+    print('d shape: {}'.format(d.shape))
+    drawplot(d, d)
+# test_vstack()
+
+def test_numpy_append():
+    # a = []
+    # b = np.append(a, [1])
+    # b = np.append(b, 2)
+    # print(a)
+    # print(b)
+    a = list()
+    a.append(1)
+    a.append(2)
+    a = np.mean(a, axis=0)
+    print(a)
+# test_numpy_append()
+
+def create_new_ground_truth():
+    dataset_generator('/home/heng/Research/isbi/fly-dataset/flyJanelia2')
+
+create_new_ground_truth()

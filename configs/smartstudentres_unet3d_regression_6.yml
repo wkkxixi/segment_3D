@@ -1,6 +1,6 @@
-id: 1
+id: 6
 model:
-    arch: unet3dregSmartStudent
+    arch: unet3dregSmartStudentRes
 
 #    save_folder: '/home/heng/Desktop/Research/isbi/fly-dataset/flyJanelia/models'
 data:
@@ -11,13 +11,13 @@ data:
     img_rows: 'same'
     img_cols: 'same'
     #path: '/Users/wonh/Desktop/fly-dataset/' # for mac
-    path: '/home/heng/Research/isbi/fly-dataset/flyJanelia2' # for ubuntu
+    path: '/home/heng/Research/isbi/fly-dataset/utokyofly' # for ubuntu
 training:
     pretrained_model: '/home/heng/Research/segment_3D/runs/teacher_unet3d_regression_4/89050/unet3dregTeacher_flyDataset_model_4.pkl'
     fed_by_teacher: True
-    fed_by_intermediate: False
+    fed_by_intermediate: True
 #    pretrained_model:
-    train_iters: 20 #200
+    train_iters: 5 #20 #200
     batch_size: 2
     patch_size:
         x: 160

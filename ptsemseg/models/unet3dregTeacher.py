@@ -62,26 +62,29 @@ class unet3dregTeacher(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, inputs):
+
         log('unet3dregTeacher: inputs size is {}'.format(inputs.size()))
         conv1 = self.conv1(inputs)
+
         log('unet3dregTeacher: after conv1 size is {}'.format(conv1.size()))
-        conv1 = self.resConv1(conv1)
-        log('unet3dregTeacher: after resConv1 size is {} should be the same'.format(conv1.size()))
-        maxpool1 = self.maxpool1(conv1)
+        resconv1 = self.resConv1(conv1)
+        log('unet3dregTeacher: after resConv1 size is {} should be the same'.format(resconv1.size()))
+        maxpool1 = self.maxpool1(resconv1)
         log('unet3dregTeacher: after maxpool1 size is {}'.format(maxpool1.size()))
 
         conv2 = self.conv2(maxpool1)
         log('unet3dregTeacher: after conv2 size is {}'.format(conv2.size()))
-        conv2 = self.resConv2(conv2)
-        log('unet3dregTeacher: after resConv2 size is {} should be the same'.format(conv2.size()))
-        maxpool2 = self.maxpool2(conv2)
+        resconv2 = self.resConv2(conv2)
+        log('unet3dregTeacher: after resConv2 size is {} should be the same'.format(resconv2.size()))
+        maxpool2 = self.maxpool2(resconv2)
         log('unet3dregTeacher: after maxpool2 size is {}'.format(maxpool2.size()))
 
         conv3 = self.conv3(maxpool2)
         log('unet3dregTeacher: after conv3 size is {}'.format(conv3.size()))
-        conv3 = self.resConv3(conv3)
-        log('unet3dregTeacher: after resConv3 size is {} should be the same'.format(conv3.size()))
-        maxpool3 = self.maxpool3(conv3)
+
+        resconv3 = self.resConv3(conv3)
+        log('unet3dregTeacher: after resConv3 size is {} should be the same'.format(resconv3.size()))
+        maxpool3 = self.maxpool3(resconv3)
         log('unet3dregTeacher: after maxpool3 size is {}'.format(maxpool3.size()))
 
         # conv4 = self.conv4(maxpool3)
@@ -99,12 +102,14 @@ class unet3dregTeacher(nn.Module):
         log('unet3dregTeacher: after cat conv3 and center => up3 {}'.format(up3.size()))
         up2 = self.up_concat2(conv2, up3)
         log('unet3dregTeacher: after cat conv2 and up3 => up2 {}'.format(up2.size()))
+
         up1 = self.up_concat1(conv1, up2)
         log('unet3dregTeacher: after cat conv1 and up2 => up1 {}'.format(up1.size()))
+
 
         final = self.final(up1)
         log('unet3dregTeacher: after final conv  => final {}'.format(final.size()))
 
         final = self.tanh(final)
         log('unet3dregTeacher: after tanh  => final {}'.format(final.size()))
-        return final
+        return final, conv1, conv3, up2, up1
