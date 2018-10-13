@@ -577,50 +577,61 @@ def test_dictionary():
 
 
 
-def test_load_model(model_path):
-    teacher_model = torch.load(model_path)
-    # # pre_trained_model = torch.load("Path to the .pth file")
-    # # print(len(model_state))
-    student_model = torch.load('/home/heng/Research/segment_3D/runs/student_unet3d_regression_4/65046/unet3dregStudent_flyDataset_model_4.pkl')
-    student_model_state = student_model['model_state']
-    a = student_model_state.copy()
+def test_load_model(model_path=None):
+
+    teacher_model = torch.load("/home/heng/Research/segment_3D/runs/final_1/65188/unet3dregTeacher_flyDataset_model_best.pkl")
+    student_model = torch.load("/home/heng/Research/segment_3D/runs/final_2/9424/unet3dregSmartStudentRes_flyDataset_model_best.pkl")
     teacher_model_state = teacher_model['model_state']
-    print('teacher: {} student: {}'.format(len(teacher_model_state), len(student_model_state)))
+    student_model_state = student_model['model_state']
+    print('length of teacher {} \n length of student {}'.format(len(teacher_model_state), len(student_model_state)))
+    # print(teacher_model_state)
+    # print(student_model_state)
+    for name, param in teacher_model_state.items():
+        print(name + ': ' + str(param.size()))
 
-
-    pretrained_dict = {k: v for k, v in teacher_model_state.items() if k in student_model_state}
-    # 2. overwrite entries in the existing state dict
-    student_model_state.update(pretrained_dict)
-    b = student_model_state
-    # shared_items = {k: x[k] for k in x if k in y and torch.equal(x[k], z[k])}
-
+    # teacher_model = torch.load(model_path)
+    # # # pre_trained_model = torch.load("Path to the .pth file")
+    # # # print(len(model_state))
+    # student_model = torch.load('/home/heng/Research/segment_3D/runs/student_unet3d_regression_4/65046/unet3dregStudent_flyDataset_model_4.pkl')
+    # student_model_state = student_model['model_state']
+    # a = student_model_state.copy()
+    # teacher_model_state = teacher_model['model_state']
+    # print('teacher: {} student: {}'.format(len(teacher_model_state), len(student_model_state)))
+    #
+    #
+    # pretrained_dict = {k: v for k, v in teacher_model_state.items() if k in student_model_state}
+    # # 2. overwrite entries in the existing state dict
+    # student_model_state.update(pretrained_dict)
+    # b = student_model_state
+    # # shared_items = {k: x[k] for k in x if k in y and torch.equal(x[k], z[k])}
+    #
+    # # print(len(shared_items))
+    # # 3. load the new state dict
+    # state = {
+    #     "epoch": 100,
+    #     "model_state": student_model_state,
+    #     "optimizer_state": student_model['optimizer_state'],
+    #     "scheduler_state": student_model['scheduler_state']
+    # }
+    #
+    # torch.save(state, '/home/heng/Research/isbi/test.pkl')
+    #
+    # updated_student_model = torch.load('/home/heng/Research/isbi/test.pkl')
+    # updated_model_state = updated_student_model['model_state']
+    # print(len(updated_model_state))
+    # print(len(pretrained_dict))
+    # # for name, param in updated_model_state.items():
+    #     # print(name + ': ' + str(param.type()))
+    # x = updated_model_state
+    # y = pretrained_dict
+    # z = a
+    # shared_items = {k: x[k] for k in x if k in y and torch.equal(x[k], y[k])}
+    #
     # print(len(shared_items))
-    # 3. load the new state dict
-    state = {
-        "epoch": 100,
-        "model_state": student_model_state,
-        "optimizer_state": student_model['optimizer_state'],
-        "scheduler_state": student_model['scheduler_state']
-    }
-
-    torch.save(state, '/home/heng/Research/isbi/test.pkl')
-
-    updated_student_model = torch.load('/home/heng/Research/isbi/test.pkl')
-    updated_model_state = updated_student_model['model_state']
-    print(len(updated_model_state))
-    print(len(pretrained_dict))
-    # for name, param in updated_model_state.items():
-        # print(name + ': ' + str(param.type()))
-    x = updated_model_state
-    y = pretrained_dict
-    z = a
-    shared_items = {k: x[k] for k in x if k in y and torch.equal(x[k], y[k])}
-
-    print(len(shared_items))
-    shared_items = {k: x[k] for k in x if k in z and torch.equal(x[k], z[k])}
-
-    print(len(shared_items))
-
+    # shared_items = {k: x[k] for k in x if k in z and torch.equal(x[k], z[k])}
+    #
+    # print(len(shared_items))
+# test_load_model(model_path=None)
 # test_load_model('/home/heng/Research/segment_3D/runs/teacher_unet3d_regression_4/89050/unet3dregTeacher_flyDataset_model_4.pkl')
 # test_load_model('/home/heng/Research/segment_3D/runs/student_unet3d_regression_4/65046/unet3dregStudent_flyDataset_model_4.pkl')
 def abcd():
@@ -678,6 +689,49 @@ def test_numpy_append():
 # test_numpy_append()
 
 def create_new_ground_truth():
-    dataset_generator('/home/heng/Research/isbi/fly-dataset/flyJanelia2')
+    dataset_generator('/home/heng/Research/isbi/fly-dataset/flyJanelia')
+    # dataset_meta('/home/heng/Research/isbi/fly-dataset/flyJanelia', target='test')
 
-create_new_ground_truth()
+# create_new_ground_truth()
+# from train_test_comparison import *
+
+# def test_compare():
+#     compare_with_gt('/home/heng/Research/isbi/fly-dataset/flyJanelia', 65188)
+# test_compare()
+
+def test_dt():
+    swc_path = '/home/heng/Research/isbi/fly-dataset/flyJanelia/swc/9.swc'
+    tif_path = '/home/heng/Research/isbi/fly-dataset/flyJanelia/images/9.tif'
+    output_path = '/home/heng/Research/isbi/fly-dataset/flyJanelia/labels/9.tif'
+    output_path_2 = '/home/heng/Pictures/9.tif'
+    output_path_3 = '/home/heng/Research/isbi/fly-dataset/flyJanelia/labels/9.tif'
+    swc2tif_dt(swc_path, tif_path, output_path_3)
+# test_dt()
+from ptsemseg.models import *
+
+def test_parameters(model_path):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model_file_name = os.path.split(model_path)[1]
+    model_name = {'arch':model_file_name.split('/')[-1].split('_')[0]}
+
+
+    # Setup Model
+    log('set up model')
+    n_classes = 1
+    log('model name: {}'.format(model_name))
+    model = get_model(model_name, n_classes, version='flyDataset')
+    state = convert_state_dict(torch.load(model_path)["model_state"])
+    model.load_state_dict(state)
+    model.to(device)
+    # print('model paramerters length: {}'.format(len(model.parameters())))
+    c = 0
+    for name, param in model.named_parameters():
+        if True:#param.requires_grad:
+            print(name, param.data)
+            c += 1
+    print(c)
+    pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(pytorch_total_params)
+
+test_parameters('/home/heng/Research/segment_3D/runs/final_2/9424/unet3dregSmartStudentRes_flyDataset_model_best.pkl')

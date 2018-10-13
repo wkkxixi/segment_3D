@@ -35,7 +35,16 @@ def imgToTensor(img, device):
 def decoder(tensor):
     # log('tensor before to pred img: {}'.format(tensor.size()))
     pred = tensor.data.cpu().numpy()
-    pred = pred[0][0]
+    if args.task == 'regression':
+        print('pred.shape {}'.format(pred.shape))
+        pred = pred[0][0]
+        print('----pred.shape {}'.format(pred.shape))
+    elif args.task == 'classification':
+        print('pred.shape {}'.format(pred.shape))
+        # pred = (pred[0][0] < pred[0][1]).astype('int')
+        pred = pred[0][1]
+    else:
+        exit(1)
 
     # log('pred img after to img: {}'.format(pred.shape))
     # ret = (pred[0][0]<pred[0][1]).astype('int')
@@ -70,7 +79,7 @@ def test(args):
 
     # Setup Model
     log('set up model')
-    n_classes = 1
+    n_classes = 2
     log('model name: {}'.format(model_name))
     model = get_model(model_name, n_classes, version=args.dataset)
     state = convert_state_dict(torch.load(args.model_path)["model_state"])
@@ -112,7 +121,8 @@ def test(args):
                 patch = imgToTensor(patch, device)
                 # print('patch tensor size: {}'.format(patch.size()))
                 pred = model(patch)
-                pred = pred[0]
+                # print('pred size: {}'.format(pred.type))
+                # pred = pred[0]
                 # log('pred after model: shape {}'.format(pred.size()))
                 # print('pred shape: '.format(pred.size()))
                 pred = decoder(pred)
@@ -209,6 +219,14 @@ if __name__ == "__main__":
         type=str,
         default="flyJanelia",
         help="Dataset to use ['flyJanelia, pascal, camvid, ade20k etc']",
+    )
+
+    parser.add_argument(
+        "--task",
+        nargs="?",
+        type=str,
+        default="regression",
+        help="Task to use. Select from [regression, classification]",
     )
 
     # parser.add_argument(

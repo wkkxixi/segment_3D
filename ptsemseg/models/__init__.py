@@ -18,6 +18,7 @@ from ptsemseg.models.unet3dregTeacher import *
 from ptsemseg.models.unet3dregStudent import *
 from ptsemseg.models.unet3dregSmartStudent import *
 from ptsemseg.models.unet3dregSmartStudentRes import *
+from ptsemseg.models.unet3dregStudentRes import *
 
 
 def get_model(model_dict, n_classes, version=None):
@@ -84,7 +85,8 @@ def _get_model_instance(name):
             "unet3dregTeacher": unet3dregTeacher,
             "unet3dregStudent": unet3dregStudent,
             "unet3dregSmartStudent": unet3dregSmartStudent,
-            "unet3dregSmartStudentRes": unet3dregSmartStudentRes
+            "unet3dregSmartStudentRes": unet3dregSmartStudentRes,
+            "unet3dregStudentRes": unet3dregStudentRes
 
         }[name]
     except:

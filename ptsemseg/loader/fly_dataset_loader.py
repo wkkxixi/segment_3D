@@ -23,10 +23,11 @@ class flyDatasetLoader(data.Dataset):
         augmentations=None,
         data_split_info=None,
         patch_size=None,
-        allow_empty_patch=True
+        allow_empty_patch=True,
+        n_classes = 1
     ):
         self.root = os.path.expanduser(root)
-        self.n_classes = 1 # for regression
+        self.n_classes = n_classes # for regression
         self.augmentations = augmentations
         self.data_split_info = data_split_info
         self.patch_size = [512, 512, 512] if patch_size is None else patch_size
@@ -106,9 +107,14 @@ class flyDatasetLoader(data.Dataset):
     def transform(self, img, lbl):
 
         img = np.stack([img], axis=0)
-        lbl = np.stack([lbl], axis=0)
-
+        if self.n_classes == 1:
+            lbl = np.stack([lbl], axis=0)
+        else:
+            lbl = (lbl > 0).astype('int')
         img = torch.from_numpy(img).float()
-        lbl = torch.from_numpy(lbl).float()
+        if self.n_classes == 1:
+            lbl = torch.from_numpy(lbl).float()
+        else:
+            lbl = torch.from_numpy(lbl).long()
 
         return img, lbl

@@ -17,8 +17,9 @@ def init_data_split(root, split_ratio, compound_dataset = False):
     from ptsemseg.utils import dataset_meta
     ratio = split_ratio
 
-    meta_path = pjoin(root, 'meta.txt')
+    meta_path = pjoin(root, 'meta_images.txt')
     dataset_meta(root)
+    dataset_meta(root, target='test')
     img_paths = []
     with open(meta_path) as f:
         lines = f.read().splitlines()
@@ -123,13 +124,15 @@ def train(cfg, writer, logger):
         augmentations=data_aug,
         data_split_info=data_split_info,
         patch_size=patch_size,
-        allow_empty_patch = cfg['training'].get('allow_empty_patch', True))
+        allow_empty_patch = cfg['training'].get('allow_empty_patch', True),
+        n_classes=cfg['training'].get('n_classes', 1))
 
-    v_loader = data_loader(
-        data_path,
-        split=cfg['data']['val_split'],
-        data_split_info=data_split_info,
-        patch_size=patch_size)
+    # v_loader = data_loader(
+    #     data_path,
+    #     split=cfg['data']['val_split'],
+    #     data_split_info=data_split_info,
+    #     patch_size=patch_size,
+    #     n_classe=cfg['training'].get('n_classes', 1))
 
     n_classes = t_loader.n_classes
     log('n_classes is: {}'.format(n_classes))
@@ -154,19 +157,19 @@ def train(cfg, writer, logger):
 
 
     model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
-    if cfg['training'].get('pretrained_model', None) is not None:
-        log('Load pretrained model: {}'.format(cfg['training'].get('pretrained_model', None)))
-        pretrainedModel = torch.load(cfg['training'].get('pretrained_model', None))
-        my_dict = model.state_dict()
-        x = my_dict.copy()
-        pretrained_dict = pretrainedModel['model_state']
-
-        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in my_dict}
-        my_dict.update(pretrained_dict)
-        y = my_dict.copy()
-        shared_items = {k: x[k] for k in x if k in y and torch.equal(x[k], y[k])}
-        if len(shared_items) == len(my_dict):
-            exit(1)
+    # if cfg['training'].get('pretrained_model', None) is not None:
+    #     log('Load pretrained model: {}'.format(cfg['training'].get('pretrained_model', None)))
+    #     pretrainedModel = torch.load(cfg['training'].get('pretrained_model', None))
+    #     my_dict = model.state_dict()
+    #     x = my_dict.copy()
+    #     pretrained_dict = pretrainedModel['model_state']
+    #
+    #     pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in my_dict}
+    #     my_dict.update(pretrained_dict)
+    #     y = my_dict.copy()
+    #     shared_items = {k: x[k] for k in x if k in y and torch.equal(x[k], y[k])}
+    #     if len(shared_items) == len(my_dict):
+    #         exit(1)
 
     # Setup optimizer, lr_scheduler and loss function
     optimizer_cls = get_optimizer(cfg)
@@ -182,7 +185,8 @@ def train(cfg, writer, logger):
     logger.info("Using loss {}".format(loss_fn))
     softmax_function = nn.Softmax(dim=1)
 
-    model_count = 0
+    # model_count = 0
+    min_loss = None
     start_iter = 0
     if cfg['training']['resume'] is not None:
         log('resume saved model')
@@ -195,6 +199,7 @@ def train(cfg, writer, logger):
             optimizer.load_state_dict(checkpoint["optimizer_state"])
             scheduler.load_state_dict(checkpoint["scheduler_state"])
             start_iter = checkpoint["epoch"]
+            min_loss = checkpoint["min_loss"]
             display(
                 "Loaded checkpoint '{}' (iter {})".format(
                     cfg['training']['resume'], checkpoint["epoch"]
@@ -207,13 +212,14 @@ def train(cfg, writer, logger):
     val_loss_meter = averageMeter()
     time_meter = averageMeter()
 
-    best_iou = -100.0
+
     i_train_iter = start_iter
 
     display('Training from {}th iteration\n'.format(i_train_iter))
     while i_train_iter < cfg['training']['train_iters']:
         i_batch_idx = 0
         train_iter_start_time = time.time()
+        averageLoss = 0
 
         # training
         for (images, labels) in trainloader:
@@ -225,14 +231,21 @@ def train(cfg, writer, logger):
 
             # mean = images[0]
 
-
-            optimizer.zero_grad()
-            outputs, myconv1_copy, myconv3_copy, myup2_copy, myup1_copy = model(images)
-
-            loss = nn.L1Loss()
-            hard_loss = loss(outputs, labels)
             soft_loss = -1
             mediate_average_loss = -1
+            optimizer.zero_grad()
+            if cfg['model']['arch'] == 'unet3dreg' or cfg['model']['arch'] == 'unet3d':
+                outputs = model(images)
+            else:
+                outputs, myconv1_copy, myconv3_copy, myup2_copy, myup1_copy = model(images)
+            if cfg['training'].get('task', 'regression') == 'regression':
+                loss = nn.L1Loss()
+                hard_loss = loss(outputs, labels)
+
+            else:
+                hard_loss = loss_fn(input=outputs, target=labels, weight=weight,
+                               size_average=cfg['training']['loss']['size_average'])
+
             if cfg['training'].get('fed_by_teacher', False):
                 # Setup Teacher Model
                 model_file_name = cfg['training'].get('pretrained_model', None)
@@ -251,7 +264,8 @@ def train(cfg, writer, logger):
                 up2_copy = autograd.Variable(up2_copy, requires_grad=False)
                 up1_copy = autograd.Variable(up1_copy, requires_grad=False)
                 soft_loss = loss(outputs, outputs_teacher)
-                loss_hard_soft = 0.8 * hard_loss + 0.1 * soft_loss
+                # loss_hard_soft = 0.8 * hard_loss + 0.1 * soft_loss
+                loss_hard_soft =  hard_loss + 0.1 * soft_loss
                 if cfg['training'].get('fed_by_intermediate', False):
                     mediate1_loss = loss(myconv1_copy, conv1_copy)
                     mediate2_loss = loss(myconv3_copy, conv3_copy)
@@ -261,12 +275,40 @@ def train(cfg, writer, logger):
                     log('mediate1_loss: {}, mediate2_loss: {}, mediate3_loss: {}, mediate4_loss: {}'.format(mediate1_loss, mediate2_loss, mediate3_loss, mediate4_loss))
                     loss = loss_hard_soft + 0.1*mediate_average_loss
                 else:
-                    loss = hard_loss + soft_loss
+                    loss = 0.9*hard_loss + 0.1*soft_loss
+            elif cfg['training'].get('fed_by_intermediate', False):
+                # Setup Teacher Model
+                model_file_name = cfg['training'].get('pretrained_model', None)
+                model_name = {'arch': model_file_name.split('/')[-1].split('_')[0]}
+                teacher_model = get_model(model_name, n_classes)
+                pretrainedModel = torch.load(cfg['training'].get('pretrained_model', None))
+                teacher_state = convert_state_dict(
+                    pretrainedModel["model_state"])  # maybe in this way it can take multiple images???
+                teacher_model.load_state_dict(teacher_state)
+                teacher_model.eval()
+                teacher_model.to(device)
+                outputs_teacher, conv1_copy, conv3_copy, up2_copy, up1_copy = teacher_model(images)
+                outputs_teacher = autograd.Variable(outputs_teacher, requires_grad=False)
+                conv1_copy = autograd.Variable(conv1_copy, requires_grad=False)
+                conv3_copy = autograd.Variable(conv3_copy, requires_grad=False)
+                up2_copy = autograd.Variable(up2_copy, requires_grad=False)
+                up1_copy = autograd.Variable(up1_copy, requires_grad=False)
+                mediate1_loss = loss(myconv1_copy, conv1_copy)
+                mediate2_loss = loss(myconv3_copy, conv3_copy)
+                mediate3_loss = loss(myup2_copy, up2_copy)
+                mediate4_loss = loss(myup1_copy, up1_copy)
+                mediate_average_loss = (mediate1_loss + mediate2_loss + mediate3_loss + mediate4_loss) / 4
+                log('mediate1_loss: {}, mediate2_loss: {}, mediate3_loss: {}, mediate4_loss: {}'.format(mediate1_loss,
+                                                                                                        mediate2_loss,
+                                                                                                        mediate3_loss,
+                                                                                                        mediate4_loss))
+                loss = 0.9*hard_loss + 0.1 * mediate_average_loss
             else:
                 loss = hard_loss
 
 
             log('==> hard loss: {} soft loss: {} mediate loss: {}'.format(hard_loss, soft_loss, mediate_average_loss))
+            averageLoss += loss
             loss.backward()
             optimizer.step()
 
@@ -287,7 +329,7 @@ def train(cfg, writer, logger):
 
         display('EntireTime for {}th training iteration: {}  EntireTime/Image: {}'.format(i_train_iter+1, time_converter(time_for_one_iteration),
                                                                                           time_converter(time_for_one_iteration/(len(trainloader)*cfg['training']['batch_size']))))
-
+        averageLoss /= (len(trainloader)*cfg['training']['batch_size'])
         # validation
         validation_check = (i_train_iter + 1) % cfg['training']['val_interval'] == 0 or \
                            (i_train_iter + 1) == cfg['training']['train_iters']
@@ -298,6 +340,31 @@ def train(cfg, writer, logger):
             '''
             This IF-CHECK is used to update the best model
             '''
+            log('Validation: average loss for current iteration is: {}'.format(averageLoss))
+            if min_loss is None:
+                min_loss = averageLoss
+
+            if averageLoss <= min_loss:
+                min_loss = averageLoss
+                state = {
+                    "epoch": i_train_iter + 1,
+                    "model_state": model.state_dict(),
+                    "optimizer_state": optimizer.state_dict(),
+                    "scheduler_state": scheduler.state_dict(),
+                    "min_loss": min_loss
+                }
+
+                save_path = os.path.join(os.getcwd(), writer.file_writer.get_logdir(),
+                                         "{}_{}_model_best.pkl".format(
+                                             cfg['model']['arch'],
+                                             cfg['data']['dataset']))
+                print('save_path is: ' + save_path)
+                # with open('/home/heng/Research/isbi/log_final_experiment.txt', 'a') as f:  # to change!!!!!
+                #     id = cfg['id']
+                #     f.write(str(id) + ':' + save_path + '\n')
+
+                torch.save(state, save_path)
+
             # if score["Mean IoU       : \t"] >= best_iou:
             #     best_iou = score["Mean IoU       : \t"]
             #     state = {
@@ -313,29 +380,13 @@ def train(cfg, writer, logger):
             #                                  cfg['data']['dataset']))
             #     torch.save(state, save_path)
 
-            state = {
-                "epoch": i_train_iter + 1,
-                "model_state": model.state_dict(),
-                "optimizer_state": optimizer.state_dict(),
-                "scheduler_state": scheduler.state_dict(),
-            }
 
-            save_path = os.path.join(os.getcwd(), writer.file_writer.get_logdir(),
-                                     "{}_{}_model_{}.pkl".format(
-                                         cfg['model']['arch'],
-                                         cfg['data']['dataset'],
-                                         model_count))
-            print('save_path is: ' + save_path)
-            with open('/home/heng/Research/isbi/log_smart_student_res_withTeacher.txt', 'a') as f: # to change!!!!!
-                id = cfg['id']
-                f.write(str(id) + ':' + save_path + '\n')
-
-
-
-            torch.save(state, save_path)
-            model_count += 1
+            # model_count += 1
 
         i_train_iter += 1
+    with open('/home/heng/Research/isbi/log_final_experiment_flyJanelia.txt', 'a') as f:  # to change!!!!!
+        id = cfg['id']
+        f.write(str(id) + ':' + save_path + '\n')
 
 
 if __name__ == "__main__":

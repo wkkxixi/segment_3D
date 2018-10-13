@@ -1,0 +1,53 @@
+id: 3
+model:
+#    arch: unet3d
+#    arch: fcn3dnet
+    arch: unet3dregSmartStudentRes
+data:
+    dataset: flyDataset
+    train_split: train
+    val_split: val
+    split_ratio: 0
+    img_rows: 'same'
+    img_cols: 'same'
+    path: '/home/heng/Research/isbi/fly-dataset/flyTaiwan' # for mac
+#    path: '/home/heng/Desktop/Research/isbi/flyJanelia/' # for ubuntu
+training:
+    pretrained_model: '/home/heng/Research/segment_3D/runs/final_1/16098/unet3dregTeacher_flyDataset_model_best.pkl'
+    fed_by_teacher: True
+    fed_by_intermediate: True
+    train_iters: 5
+    batch_size: 2
+    patch_size:
+        x: 160
+        y: 160
+        z: 8
+    cross_entropy_ratio: 0.003
+    val_interval: 1
+    n_workers: 3
+    print_interval: 1
+    print_interval_per_batch: False
+    task: "regression"
+#    augmentations: ['flip3d', 'rotate3d']
+    augmentations:
+      hflip3d: 0.5 # [0, 1)
+      vflip3d: 0.5 # [0, 1)
+      iflip3d: 0.5 # [0, 1)
+      rotate3d: 180 # [-180, 180]
+#      aug1: 'par1'
+#      aug2: 'par2'
+    optimizer:
+        name: 'adam'
+        lr: 1.0e-3
+        weight_decay: 0.0005
+#        momentum: 0.9
+    loss:
+#        name: 'cross_entropy3d'
+        name: 'regression_l1'
+        size_average: True
+    lr_schedule:
+        #name: 'poly_lr'
+        #max_iter: 400
+    resume: fcn3d_fly_best_model.pkl # path to the model saved before
+#    resume: '/Users/wonh/y3s2/isbi/segment_3D/runs/fcn3d_fly/65461/fcn3dnet_flyJanelia_best_model.pkl' # for mac
+    #resume: '/home/heng/Desktop/Research/0920/segment_3D/runs/fcn3d_fly/87793/fcn3dnet_flyJanelia_best_model.pkl' # for ubuntu

@@ -63,17 +63,17 @@ def writetiff3d(filepath, block):
             tif.save(saved_block.astype('uint8'), compress=0)
 
 
-def dataset_meta(folder):
+def dataset_meta(folder, target='images'):
     from os.path import join as pjoin
     from glob import glob
-    meta_file = pjoin(folder, 'meta.txt')
+    meta_file = pjoin(folder, 'meta_' + target +'.txt' )
     flag = 0
     with open(meta_file, 'w') as f:
         pass
     for filename in os.listdir(folder):
-        if filename == 'images':
-            print('images found!')
-            paths = glob(pjoin(folder, 'images') + '/*.tif')
+        if filename == target:
+            print(target + ' found!')
+            paths = glob(pjoin(folder, target) + '/*.tif')
             with open(meta_file, 'a') as f:
                 for p in paths:
                     f.write(p + '\n')
@@ -83,7 +83,7 @@ def dataset_meta(folder):
             if filename.__contains__('fly'):
                 print('subset found!')
                 sub_dataset = pjoin(folder, filename)
-                sub_dataset_imgs = pjoin(sub_dataset, 'images')
+                sub_dataset_imgs = pjoin(sub_dataset, target)
                 sub_dataset_img_paths = glob(sub_dataset_imgs + '/*.tif')
                 with open(meta_file, 'a') as f:
                     for p in sub_dataset_img_paths:
@@ -128,26 +128,30 @@ def dataset_generator(folder):
     from os.path import join as pjoin
     import shutil
     import fnmatch
-    img_folder_path = pjoin(folder, 'images')
-    swc_folder_path = pjoin(folder, 'swc')
-    new_folder_maker(img_folder_path)
-    new_folder_maker(swc_folder_path)
-
-    for filename in os.listdir(folder):
-        if fnmatch.fnmatch(filename, '*.tif') and is_number(filename.split('.tif')[-2]):
-            shutil.move(pjoin(folder, filename), pjoin(img_folder_path, filename))
-        if fnmatch.fnmatch(filename, '*.swc') and is_number(filename.split('.swc')[-2]):
-            shutil.move(pjoin(folder, filename), pjoin(swc_folder_path, filename))
-    info_generator(folder)
+    # img_folder_path = pjoin(folder, 'images')
+    # swc_folder_path = pjoin(folder, 'swc')
+    # new_folder_maker(img_folder_path)
+    # new_folder_maker(swc_folder_path)
+    #
+    # for filename in os.listdir(folder):
+    #     if fnmatch.fnmatch(filename, '*.tif') and is_number(filename.split('.tif')[-2]):
+    #         shutil.move(pjoin(folder, filename), pjoin(img_folder_path, filename))
+    #     if fnmatch.fnmatch(filename, '*.swc') and is_number(filename.split('.swc')[-2]):
+    #         shutil.move(pjoin(folder, filename), pjoin(swc_folder_path, filename))
+    # info_generator(folder)
     swc2tif_operation(folder, 'labels', mode=1)
-    swc2tif_operation(folder, 'ground_truth', mode=0)
+    swc2tif_operation(folder, 'ground_truth_original', mode=0)
 
 
 '''
 Reconstruct 3d tiff image based on its swc annotation result
 '''
 def swc2tif(filepath, tif_filepath, output_path):
-    img = loadtiff3d(tif_filepath)
+    try:
+        img = loadtiff3d(tif_filepath)
+    except FileNotFoundError:
+        tif_filepath = tif_filepath.replace('images', 'test')
+        img = loadtiff3d(tif_filepath)
     x_shape = img.shape[0]
     y_shape = img.shape[1]
     z_shape = img.shape[2]
@@ -157,9 +161,9 @@ def swc2tif(filepath, tif_filepath, output_path):
         x = swc[row][2]
         y = swc[row][3]
         z = swc[row][4]
-        # r = swc[row][-2]
+        r = swc[row][-2]
         # r += 3
-        r = 1  # all radius set to 1
+        # r = 1  # all radius set to 1
         p = swc[row][-1]
         output[int(max(0, x-r)):int(min(x_shape, x+r)), int(max(0, y-r)):int(min(y_shape, y+r)), int(max(0, z-r)):int(min(z_shape, z+r))] = 255
     writetiff3d(output_path, output)
@@ -182,11 +186,14 @@ def swc2tif_operation(folder, label_folder_name, mode = 0):
     content = [x.strip() for x in content]
     for c in content:
         filename = (c.split()[0]).split('.tif')[0]
+        if filename != '9':
+            continue
         print(filename + '.swc is on processing')
         file_path = folder + '/swc/' + filename + '.swc'
         converted_path = label_folder + '/' + filename + '.tif'
         tif_path = folder + '/images/' + filename + '.tif'
         if mode == 1:
+            print('file_path: {} tif_path: {} converted_path: {}'.format(file_path, tif_path, converted_path))
             swc2tif_dt(file_path, tif_path, converted_path)
         else:
             swc2tif(file_path, tif_path, converted_path)
@@ -197,7 +204,12 @@ Regenerate tif file from swc and also apply distance transform.
 def swc2tif_dt(swc_path, tif_path, output_path):
     import math
     swc = loadswc(swc_path)
-    img = loadtiff3d(tif_path)
+    try:
+        img = loadtiff3d(tif_path)
+    except FileNotFoundError:
+        tif_filepath = tif_path.replace('images', 'test')
+        img = loadtiff3d(tif_filepath)
+    # img = loadtiff3d(tif_path)
     shape = img.shape
     skimg = np.ones(shape)
     zeromask = np.ones(shape)
@@ -251,8 +263,9 @@ def swc2tif_dt(swc_path, tif_path, output_path):
     dt = np.exp(a * (1 - dt / dm)) - 1
     dt[zeromask == 1] = 0
     dt = (dt/np.max(dt))*255
-
+    print('.......')
     writetiff3d(output_path, dt)
+    print('xxxxxxxx')
 
 
 

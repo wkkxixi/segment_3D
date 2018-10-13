@@ -1,4 +1,4 @@
-DEBUG = True
+DEBUG = False
 def log(s):
     if DEBUG:
         print(s)
@@ -201,30 +201,58 @@ class unetConv2_3d(nn.Module):
         return outputs
 
 class unetConv2_3d_regression(nn.Module):
-    def __init__(self, in_size, out_size, is_batchnorm):
+    def __init__(self, in_size, out_size, is_batchnorm, residual_path=False):
         super(unetConv2_3d_regression, self).__init__()
-
-        if is_batchnorm:
-            self.conv1 = nn.Sequential(
-                nn.Conv3d(in_size, out_size, 3, 1, 1),
-                nn.BatchNorm3d(out_size),
-                nn.ReLU(),
-            )
-            self.conv2 = nn.Sequential(
-                nn.Conv3d(out_size, out_size, 3, 1, 1),
-                nn.BatchNorm3d(out_size),
-                nn.ReLU(),
-            )
+        self.residual_path = residual_path
+        # print(self.residual_path)
+        # if residual_path:
+        #     self.reduce_channel = nn.Conv3d(in_size, in_size, 1)
+        if residual_path:
+            if is_batchnorm:
+                self.conv1 = nn.Sequential(
+                    nn.Conv3d(in_size, in_size, 3, 1, 1),
+                    nn.BatchNorm3d(in_size),
+                    nn.ReLU(),
+                )
+                self.conv2 = nn.Sequential(
+                    nn.Conv3d(in_size, out_size, 3, 1, 1),
+                    nn.BatchNorm3d(out_size),
+                    nn.ReLU(),
+                )
+            else:
+                self.conv1 = nn.Sequential(nn.Conv3d(in_size, in_size, 3, 1, 1), nn.ReLU())
+                self.conv2 = nn.Sequential(
+                    nn.Conv3d(in_size, out_size, 3, 1, 1), nn.ReLU()
+                )
         else:
-            self.conv1 = nn.Sequential(nn.Conv3d(in_size, out_size, 3, 1, 1), nn.ReLU())
-            self.conv2 = nn.Sequential(
-                nn.Conv3d(out_size, out_size, 3, 1, 1), nn.ReLU()
-            )
+            if is_batchnorm:
+                self.conv1 = nn.Sequential(
+                    nn.Conv3d(in_size, out_size, 3, 1, 1),
+                    nn.BatchNorm3d(out_size),
+                    nn.ReLU(),
+                )
+                self.conv2 = nn.Sequential(
+                    nn.Conv3d(out_size, out_size, 3, 1, 1),
+                    nn.BatchNorm3d(out_size),
+                    nn.ReLU(),
+                )
+            else:
+                self.conv1 = nn.Sequential(nn.Conv3d(in_size, out_size, 3, 1, 1), nn.ReLU())
+                self.conv2 = nn.Sequential(
+                    nn.Conv3d(out_size, out_size, 3, 1, 1), nn.ReLU()
+                )
 
     def forward(self, inputs):
         outputs = self.conv1(inputs)
+        if self.residual_path:
+            outputs = torch.add(inputs, outputs)
         outputs = self.conv2(outputs)
+
+
         return outputs
+
+
+
 
 class unetResConv_3d(nn.Module):
     def __init__(self, in_size, out_size, is_batchnorm):
@@ -317,9 +345,9 @@ class unetUp3d(nn.Module):
         return output
 
 class unetUp3d_regression(nn.Module):
-    def __init__(self, in_size, out_size, is_deconv):
+    def __init__(self, in_size, out_size, is_deconv, residual_path=False):
         super(unetUp3d_regression, self).__init__()
-        self.conv = unetConv2_3d_regression(in_size, out_size, False)
+        self.conv = unetConv2_3d_regression(in_size, out_size, False, residual_path=residual_path)
         if is_deconv:
             # self.up = nn.ConvTranspose3d(in_size, out_size, kernel_size=2, stride=2)
             self.up = nn.Sequential(nn.ConvTranspose3d(in_size, out_size, kernel_size=2, stride=2),
