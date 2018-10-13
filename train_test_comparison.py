@@ -14,6 +14,14 @@ import yaml
 
 
 
+
+def time_converter(elapsed):
+    hour = int(elapsed / 3600)
+    left = elapsed % 3600
+    minute = int(left / 60)
+    seconds = left % 60
+    return '{} h {} m {} s'.format(hour, minute, seconds)
+
 def compare_with_gt(folderpath, runID):
     import csv
     content = 'File\tPrecision\tRecall\tF1'  # content format of the compareswc
@@ -52,13 +60,13 @@ def compare_with_gt(folderpath, runID):
 
 
 config_folder_path = '/home/heng/Research/segment_3D/configs'
-log_file = '/home/heng/Research/isbi/log_final_experiment_flyJanelia.txt'   # to change!!!!!
+log_file = '/home/heng/Research/isbi/final_experiment/log_final_experiment_flyjanelia.txt'   # to change!!!!!
 
 for f in os.listdir(config_folder_path):
-    if fnmatch.fnmatch(f, 'final_1.yml'):
+    if fnmatch.fnmatch(f, 'final_4.yml'):
         continue
     # if fnmatch.fnmatch(f,'final_1.yml'): # to change!!!!!!
-    elif fnmatch.fnmatch(f, 'final_6.yml'):
+    elif fnmatch.fnmatch(f, 'final_1.yml') or fnmatch.fnmatch(f, 'final_2.yml' or fnmatch.fnmatch(f, 'final_3.yml') or fnmatch.fnmatch(f, 'final_5.yml')):
         config_file_path = config_folder_path + '/' + f
         with open(config_file_path) as fp:
             cfg = yaml.load(fp)
@@ -94,6 +102,7 @@ for f in os.listdir(config_folder_path):
                         #     continue
                         runID = model_path.split('/')[-2]
                         print('{}: 3. Testing...runID: {}'.format(id, runID))
+                        start = time.time()
                         with open(pjoin(folder_path, 'meta_test.txt')) as meta:
                             items = meta.read().splitlines()
                             for item in items:
@@ -103,6 +112,10 @@ for f in os.listdir(config_folder_path):
                                     task = cfg['training'].get('task', 'regression')
                                     test_cmd = 'python3 test.py  --img_path ' + img_path + ' --out_path ' + out_path + ' --model_path ' + model_path + ' --task ' + task
                                     os.system(test_cmd)
+                        end = time.time()
+                        elapsed = end - start
+                        with open('/home/heng/Research/isbi/test_time_logger.txt', 'a') as time_logger:
+                            time_logger.write('\n\nTime elapsed for {} is : {}\n'.format(item, time_converter(elapsed)))
                         print('{}: 4. Comparing...'.format(id))
                         compare_with_gt(folder_path, runID)
 
